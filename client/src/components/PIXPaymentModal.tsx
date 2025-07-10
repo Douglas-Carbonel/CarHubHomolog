@@ -116,8 +116,12 @@ export function PIXPaymentModal({
     },
     onSuccess: (data) => {
       console.log('PIX created successfully:', data);
-      setPixPayment(data);
+      // Garantir que o loading pare antes de mostrar o QR code
       setIsGenerating(false);
+      // Aguardar um pequeno delay para garantir que o estado seja atualizado
+      setTimeout(() => {
+        setPixPayment(data);
+      }, 100);
       toast({
         title: "PIX gerado com sucesso!",
         description: "O QR Code e chave PIX foram criados.",
@@ -286,7 +290,7 @@ export function PIXPaymentModal({
           )}
 
           {/* Geração de novo PIX */}
-          {!pixPayment && !isGenerating && (
+          {!pixPayment && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -404,7 +408,7 @@ export function PIXPaymentModal({
           )}
 
           {/* PIX gerado */}
-          {pixPayment && !isGenerating && (
+          {pixPayment && (
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl p-6 space-y-6">
               {/* Header de sucesso */}
               <div className="text-center space-y-3">
