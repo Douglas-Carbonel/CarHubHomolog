@@ -1873,27 +1873,26 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
-      // Verificar se o mercado_pago_id já existe antes de inserir
+      // Verificar se o mercado_pago_id já existe e atualizar se necessário
       const existingMercadoPagoId = await db.execute(sql`
-        SELECT id FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
+        SELECT * FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
       `);
 
       if (existingMercadoPagoId.rows.length > 0) {
-        console.log('MercadoPago ID already exists, returning existing payment');
-        // Se já existe, buscar e retornar os dados existentes
-        const existingPaymentData = await db.execute(sql`
-          SELECT * FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
+        console.log('MercadoPago ID already exists, updating with new QR code data');
+        // Atualizar o registro existente com os novos dados do QR code
+        await db.execute(sql`
+          UPDATE pix_payments 
+          SET qr_code_text = ${pixPayment.qrCode},
+              qr_code_base64 = ${pixPayment.qrCodeBase64},
+              expires_at = ${pixPayment.expirationDate},
+              status = ${pixPayment.status},
+              updated_at = NOW()
+          WHERE mercado_pago_id = ${pixPayment.id}
         `);
-        const existing = existingPaymentData.rows[0];
-        return res.json({
-          id: existing.mercado_pago_id,
-          status: existing.status,
-          qrCode: existing.qr_code_text,
-          qrCodeBase64: existing.qr_code_base64,
-          pixCopyPaste: existing.qr_code_text,
-          expirationDate: existing.expires_at,
-          amount: parseFloat(existing.amount)
-        });
+        
+        console.log('Updated existing PIX payment with QR code data');
+        return res.json(pixPayment);
       }
 
       // Salvar dados do PIX no banco
