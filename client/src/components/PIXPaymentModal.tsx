@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { QrCode, Copy, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { QrCode, Copy, Clock, CheckCircle, XCircle, CreditCard, Smartphone, AlertCircle } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -217,30 +219,50 @@ export function PIXPaymentModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
-            Pagamento PIX - Serviço #{serviceId}
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            Pagamento PIX
           </DialogTitle>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">
+              Serviço #{serviceId}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              Instantâneo
+            </Badge>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* PIX existentes */}
           {existingPIX && existingPIX.length > 0 && (
-            <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-              <h3 className="font-medium mb-3">PIX Criados</h3>
-              <div className="space-y-2">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">PIX Recentes</h3>
+              </div>
+              <div className="space-y-3">
                 {existingPIX.map((pix: any) => (
-                  <div key={pix.id} className="flex items-center justify-between bg-white dark:bg-gray-700 p-3 rounded">
-                    <div className="flex items-center gap-2">
+                  <div key={pix.id} className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <div className="flex items-center gap-3">
                       {getStatusIcon(pix.status)}
-                      <span className="font-medium">R$ {parseFloat(pix.amount).toFixed(2)}</span>
-                      <span className={`text-sm ${getStatusColor(pix.status)}`}>
-                        {getStatusText(pix.status)}
-                      </span>
+                      <div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">
+                          R$ {parseFloat(pix.amount).toFixed(2)}
+                        </div>
+                        <Badge 
+                          variant={pix.status === "approved" ? "default" : pix.status === "pending" ? "secondary" : "destructive"}
+                          className="text-xs"
+                        >
+                          {getStatusText(pix.status)}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {new Date(pix.created_at).toLocaleDateString('pt-BR')}
                     </div>
                   </div>
@@ -251,20 +273,32 @@ export function PIXPaymentModal({
 
           {/* Geração de novo PIX */}
           {!pixPayment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="amount">Valor (R$)</Label>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <QrCode className="h-4 w-4 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Criar Novo PIX</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="amount" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Valor (R$) *
+                  </Label>
                   <Input
                     id="amount"
                     type="text"
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     placeholder="0,00"
+                    className="text-lg font-semibold"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="customerEmail">Email do Cliente</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="customerEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Email do Cliente
+                  </Label>
                   <Input
                     id="customerEmail"
                     type="email"
@@ -275,9 +309,11 @@ export function PIXPaymentModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="customerName">Nome do Cliente</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customerName" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Nome do Cliente
+                  </Label>
                   <Input
                     id="customerName"
                     value={customerName}
@@ -285,8 +321,10 @@ export function PIXPaymentModal({
                     placeholder="Nome completo"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="customerDocument">CPF/CNPJ</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="customerDocument" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    CPF/CNPJ
+                  </Label>
                   <Input
                     id="customerDocument"
                     value={customerDocument}
@@ -296,155 +334,182 @@ export function PIXPaymentModal({
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="description">Descrição (opcional)</Label>
+              <div className="space-y-2">
+                <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Descrição (opcional)
+                </Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Descrição do pagamento"
-                  rows={2}
+                  rows={3}
+                  className="resize-none"
                 />
               </div>
+
+              <Separator />
 
               <Button 
                 onClick={handleGeneratePIX} 
                 disabled={isGenerating || !amount}
-                className="w-full"
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
               >
-                {isGenerating ? "Gerando PIX..." : "Gerar PIX"}
+                {isGenerating ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Gerando PIX...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <QrCode className="h-5 w-5" />
+                    Gerar PIX
+                  </div>
+                )}
               </Button>
             </div>
           )}
 
           {/* PIX gerado */}
           {pixPayment && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">PIX Gerado com Sucesso!</h3>
-                <p className="text-3xl font-bold text-green-600">
-                  R$ {pixPayment.amount.toFixed(2)}
-                </p>
-              </div>
-
-              {/* QR Code Debug Info */}
-              <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded mb-4">
-                <p>Debug Info:</p>
-                <p>QR Code Base64 exists: {pixPayment.qrCodeBase64 ? 'Sim' : 'Não'}</p>
-                <p>QR Code Base64 length: {pixPayment.qrCodeBase64?.length || 0}</p>
-                <p>QR Code starts with data:image: {pixPayment.qrCodeBase64?.startsWith('data:image/') ? 'Sim' : 'Não'}</p>
-                <p>QR Code text length: {pixPayment.qrCode?.length || 0}</p>
-              </div>
-
-              {/* QR Code */}
-              {pixPayment.qrCodeBase64 && pixPayment.qrCodeBase64.length > 100 ? (
-                <div className="text-center">
-                  <div className="bg-white p-4 rounded-lg inline-block border shadow-sm">
-                    <img
-                      src={pixPayment.qrCodeBase64}
-                      alt="QR Code PIX"
-                      className="mx-auto block"
-                      style={{ 
-                        width: "300px", 
-                        height: "300px",
-                        imageRendering: "crisp-edges",
-                        objectFit: "contain"
-                      }}
-                      onError={(e) => {
-                        console.error('Error loading QR code image');
-                        console.error('QR Code data:', pixPayment.qrCodeBase64);
-                        console.error('QR Code data length:', pixPayment.qrCodeBase64?.length || 0);
-                        console.error('QR Code preview:', pixPayment.qrCodeBase64?.substring(0, 100) || 'empty');
-                        
-                        const target = e.currentTarget;
-                        const container = target.parentNode as HTMLElement;
-                        
-                        if (container && !container.querySelector('.qr-error')) {
-                          target.style.display = 'none';
-                          const errorDiv = document.createElement('div');
-                          errorDiv.className = 'qr-error bg-red-50 p-4 rounded border border-red-200';
-                          errorDiv.innerHTML = `
-                            <p class="text-red-600 text-sm font-medium mb-2">❌ QR Code não pôde ser carregado</p>
-                            <p class="text-red-500 text-xs">Use a chave PIX Copia e Cola abaixo</p>
-                            <p class="text-red-400 text-xs mt-2">Dados: ${pixPayment.qrCodeBase64?.length || 0} caracteres</p>
-                          `;
-                          container.appendChild(errorDiv);
-                        }
-                      }}
-                      onLoad={() => {
-                        console.log('QR code image loaded successfully');
-                        console.log('Image source length:', pixPayment.qrCodeBase64?.length);
-                      }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 mt-3">
-                    📱 Escaneie o QR Code com seu app de pagamento PIX
-                  </p>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl p-6 space-y-6">
+              {/* Header de sucesso */}
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
-              ) : pixPayment.qrCode && pixPayment.qrCode.length > 30 ? (
-                <div className="text-center">
-                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                    <p className="text-orange-600 text-sm font-medium mb-2">⚠️ QR Code visual não disponível</p>
-                    <p className="text-orange-500 text-xs">Use a chave PIX Copia e Cola abaixo para realizar o pagamento</p>
-                    <p className="text-orange-400 text-xs mt-2">Código PIX: {pixPayment.qrCode.length} caracteres</p>
+                <div>
+                  <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-1">
+                    PIX Gerado com Sucesso!
+                  </h3>
+                  <div className="text-3xl font-bold text-green-700 dark:text-green-300">
+                    R$ {pixPayment.amount.toFixed(2)}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <p className="text-red-600 text-sm font-medium mb-2">❌ Erro ao gerar PIX</p>
-                    <p className="text-red-500 text-xs">Tente gerar um novo PIX</p>
-                    <p className="text-red-400 text-xs mt-2">QR Base64: {pixPayment.qrCodeBase64?.length || 0} chars, QR Text: {pixPayment.qrCode?.length || 0} chars</p>
-                  </div>
-                </div>
-              )}
-              
-              
-
-              {/* Chave PIX */}
-              <div>
-                <Label>Chave PIX Copia e Cola</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={pixPayment.pixCopyPaste}
-                    readOnly
-                    className="font-mono text-xs"
-                  />
-                  <Button
-                    onClick={() => copyToClipboard(pixPayment.pixCopyPaste)}
-                    variant="outline"
-                    size="icon"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <Badge variant="secondary" className="mt-2">
+                    {getStatusText(pixPayment.status)}
+                  </Badge>
                 </div>
               </div>
 
-              {/* Informações do pagamento */}
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-gray-600">Status:</span>
-                    <span className="ml-2 font-medium">{getStatusText(pixPayment.status)}</span>
+              <Separator className="bg-green-200 dark:bg-green-700" />
+
+              {/* QR Code Section */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* QR Code */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">Escaneie o QR Code</h4>
                   </div>
-                  <div>
-                    <span className="text-gray-600">ID:</span>
-                    <span className="ml-2 font-mono">{pixPayment.id}</span>
+                  
+                  {pixPayment.qrCodeBase64 && pixPayment.qrCodeBase64.startsWith('data:image/') ? (
+                    <div className="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
+                      <img
+                        src={pixPayment.qrCodeBase64}
+                        alt="QR Code PIX"
+                        className="w-full max-w-[250px] h-auto mx-auto"
+                        style={{ 
+                          imageRendering: "crisp-edges",
+                          objectFit: "contain"
+                        }}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          const container = target.parentNode as HTMLElement;
+                          
+                          if (container && !container.querySelector('.qr-error')) {
+                            target.style.display = 'none';
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'qr-error bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-700';
+                            errorDiv.innerHTML = `
+                              <div class="flex items-center gap-2 text-orange-600 dark:text-orange-400 text-sm font-medium mb-2">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                QR Code indisponível
+                              </div>
+                              <p class="text-orange-500 dark:text-orange-300 text-xs">Use a chave PIX abaixo para realizar o pagamento</p>
+                            `;
+                            container.appendChild(errorDiv);
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                      <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 text-sm font-medium mb-2">
+                        <AlertCircle className="h-4 w-4" />
+                        QR Code indisponível
+                      </div>
+                      <p className="text-orange-500 dark:text-orange-300 text-xs">
+                        Use a chave PIX ao lado para realizar o pagamento
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Chave PIX e Informações */}
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Copy className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">Chave PIX Copia e Cola</h4>
+                    </div>
+                    <div className="relative">
+                      <Textarea
+                        value={pixPayment.pixCopyPaste}
+                        readOnly
+                        className="font-mono text-xs resize-none h-20 pr-12 bg-gray-50 dark:bg-gray-800"
+                      />
+                      <Button
+                        onClick={() => copyToClipboard(pixPayment.pixCopyPaste)}
+                        size="sm"
+                        className="absolute top-2 right-2 h-8 w-8 p-0"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-600">Expira em:</span>
-                    <span className="ml-2">
-                      {new Date(pixPayment.expirationDate).toLocaleString('pt-BR')}
-                    </span>
+
+                  <Separator />
+
+                  {/* Informações do PIX */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Detalhes do Pagamento</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">ID do PIX:</span>
+                        <span className="font-mono text-xs text-gray-900 dark:text-gray-100">{pixPayment.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Expira em:</span>
+                        <span className="text-gray-900 dark:text-gray-100">
+                          {new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                        <Badge variant={pixPayment.status === "pending" ? "secondary" : "default"} className="text-xs">
+                          {getStatusText(pixPayment.status)}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-2">
+              <Separator className="bg-green-200 dark:bg-green-700" />
+
+              {/* Ações */}
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={() => setPixPayment(null)}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   Gerar Novo PIX
                 </Button>

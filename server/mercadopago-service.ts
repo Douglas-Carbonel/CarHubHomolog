@@ -88,48 +88,45 @@ export class MercadoPagoService {
             console.log('Warning: PIX code does not start with expected format, but proceeding...');
           }
           
-          // Tentar múltiplas configurações de QR Code
-          const qrOptions = [
-            {
-              width: 300,
-              margin: 4,
-              errorCorrectionLevel: 'M' as const,
-              type: 'image/png' as const,
-              color: { dark: '#000000', light: '#FFFFFF' }
-            },
-            {
-              width: 256,
-              margin: 2,
-              errorCorrectionLevel: 'L' as const,
-              type: 'image/png' as const
-            },
-            {
-              width: 200,
-              margin: 1,
-              errorCorrectionLevel: 'L' as const
+          // Configuração otimizada de QR Code
+          const qrOptions = {
+            width: 300,
+            margin: 2,
+            errorCorrectionLevel: 'M' as const,
+            type: 'image/png' as const,
+            color: { 
+              dark: '#000000', 
+              light: '#FFFFFF' 
             }
-          ];
+          };
 
-          for (let i = 0; i < qrOptions.length; i++) {
+          try {
+            console.log('Gerando QR code com configuração otimizada...');
+            qrCodeBase64 = await QRCode.toDataURL(qrCodeText, qrOptions);
+            
+            if (qrCodeBase64 && qrCodeBase64.startsWith('data:image/png;base64,')) {
+              console.log('QR code gerado com sucesso!');
+              console.log('Tamanho do QR code:', qrCodeBase64.length, 'caracteres');
+              console.log('Preview:', qrCodeBase64.substring(0, 50) + '...');
+            } else {
+              console.error('QR code gerado mas formato inválido:', qrCodeBase64?.substring(0, 100));
+              qrCodeBase64 = '';
+            }
+          } catch (qrError) {
+            console.error('Erro ao gerar QR code:', qrError);
+            // Tentar com configuração mais simples
             try {
-              console.log(`Attempting QR generation with option ${i + 1}...`);
-              const qrCodeDataURL = await QRCode.toDataURL(qrCodeText, qrOptions[i]);
-              
-              if (qrCodeDataURL && qrCodeDataURL.startsWith('data:image/')) {
-                qrCodeBase64 = qrCodeDataURL;
-                console.log(`QR code generated successfully with option ${i + 1}`);
-                console.log('QR code size:', qrCodeDataURL.length);
-                console.log('QR code prefix:', qrCodeDataURL.substring(0, 50));
-                break;
-              }
-            } catch (optionError) {
-              console.error(`QR generation option ${i + 1} failed:`, optionError);
-              continue;
+              console.log('Tentando configuração simplificada...');
+              qrCodeBase64 = await QRCode.toDataURL(qrCodeText, { 
+                width: 250, 
+                margin: 1,
+                errorCorrectionLevel: 'L' as const
+              });
+              console.log('QR code gerado com configuração simplificada');
+            } catch (fallbackError) {
+              console.error('Fallback QR generation também falhou:', fallbackError);
+              qrCodeBase64 = '';
             }
-          }
-
-          if (!qrCodeBase64) {
-            throw new Error('All QR generation options failed');
           }
         } catch (error) {
           console.error('Error generating QR code:', error);
