@@ -503,7 +503,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         services = services.filter(service => service.status === status);
       }
 
-      res.json(services);
+      // Clean up circular references and ensure safe serialization
+      const cleanServices = services.map(service => ({
+        ...service,
+        // Remove any potential circular references
+        customer: service.customer ? {
+          id: service.customer.id,
+          code: service.customer.code,
+          name: service.customer.name,
+          email: service.customer.email,
+          phone: service.customer.phone,
+          document: service.customer.document,
+          document_type: service.customer.document_type
+        } : null,
+        vehicle: service.vehicle ? {
+          id: service.vehicle.id,
+          customer_id: service.vehicle.customer_id,
+          license_plate: service.vehicle.license_plate,
+          brand: service.vehicle.brand,
+          model: service.vehicle.model,
+          year: service.vehicle.year,
+          color: service.vehicle.color,
+          fuel_type: service.vehicle.fuel_type
+        } : null,
+        serviceType: service.serviceType ? {
+          id: service.serviceType.id,
+          name: service.serviceType.name,
+          description: service.serviceType.description,
+          defaultPrice: service.serviceType.defaultPrice
+        } : null
+      }));
+
+      res.json(cleanServices);
     } catch (error) {
       console.error("Error fetching services:", error);
       res.status(500).json({ message: "Failed to fetch services" });
@@ -1946,7 +1977,18 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       
       console.log('PIX saved to database successfully');
 
-      res.json(pixPayment);
+      // Retornar dados do PIX sem referências circulares
+      const cleanPixPayment = {
+        id: pixPayment.id,
+        status: pixPayment.status,
+        amount: pixPayment.amount,
+        qrCode: pixPayment.qrCode,
+        qrCodeBase64: pixPayment.qrCodeBase64,
+        pixCopyPaste: pixPayment.pixCopyPaste || pixPayment.qrCode,
+        expirationDate: pixPayment.expirationDate
+      };
+
+      res.json(cleanPixPayment);
     } catch (error) {
       console.error("Error creating PIX payment:", error);
       res.status(500).json({ 
