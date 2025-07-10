@@ -1801,6 +1801,43 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
     }
   });
 
+  // Rota para forçar criação de novo PIX (sobrescrevendo existente)
+  app.post("/api/mercadopago/create-pix-force", requireAuth, async (req, res) => {
+    try {
+      const { serviceId } = req.body;
+
+      if (!serviceId) {
+        return res.status(400).json({ message: "Service ID é obrigatório" });
+      }
+
+      // Verificar se o serviço existe
+      const service = await storage.getService(serviceId);
+      if (!service) {
+        return res.status(404).json({ message: "Serviço não encontrado" });
+      }
+
+      // Marcar PIX existentes como cancelados
+      await db.execute(sql`
+        UPDATE pix_payments 
+        SET status = 'cancelled', updated_at = NOW()
+        WHERE service_id = ${serviceId} 
+        AND status IN ('pending', 'approved', 'authorized', 'in_process')
+      `);
+      console.log('Marked existing PIX as cancelled for service:', serviceId);
+
+      // Continuar com criação normal (mesmo código da rota principal)
+      // Redirecionar para a criação normal
+      req.body.force = true;
+      return app._router.handle(req, res, () => {});
+    } catch (error) {
+      console.error("Error forcing PIX creation:", error);
+      res.status(500).json({ 
+        message: "Erro ao forçar criação do PIX",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // MercadoPago PIX routes
   app.post("/api/mercadopago/create-pix", requireAuth, async (req, res) => {
     try {
@@ -1816,9 +1853,38 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.status(404).json({ message: "Serviço não encontrado" });
       }
 
-      // LIMPAR TODOS os PIX existentes para este serviço
-      await db.execute(sql`DELETE FROM pix_payments WHERE service_id = ${serviceId}`);
-      console.log('Deleted all existing PIX for service:', serviceId);
+      // Verificar se já existe PIX ativo para este serviço (apenas se não for force)
+      if (!req.body.force) {
+        const existingPIX = await db.execute(sql`
+          SELECT * FROM pix_payments 
+          WHERE service_id = ${serviceId} 
+          AND status IN ('pending', 'approved', 'authorized', 'in_process')
+          ORDER BY created_at DESC 
+          LIMIT 1
+        `);
+
+        if (existingPIX.rows.length > 0) {
+          const existing = existingPIX.rows[0];
+          return res.status(409).json({
+            message: "PIX_ALREADY_EXISTS",
+            existingPIX: {
+              id: existing.mercado_pago_id,
+              amount: parseFloat(existing.amount),
+              status: existing.status,
+              createdAt: existing.created_at
+            }
+          });
+        }
+      } else {
+        // Se for force, cancelar PIX existentes
+        await db.execute(sql`
+          UPDATE pix_payments 
+          SET status = 'cancelled', updated_at = NOW()
+          WHERE service_id = ${serviceId} 
+          AND status IN ('pending', 'approved', 'authorized', 'in_process')
+        `);
+        console.log('Cancelled existing PIX for service (force mode):', serviceId);
+      }
 
       const paymentData = {
         amount: parseFloat(amount),
@@ -1847,11 +1913,14 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
-      // DELETAR qualquer PIX existente com mesmo ID para garantir dados limpos
-      await db.execute(sql`
-        DELETE FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
+      // Verificar se o MercadoPago ID já existe para evitar duplicatas
+      const duplicatePIX = await db.execute(sql`
+        SELECT id FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
       `);
-      console.log('Deleted any existing PIX with same MercadoPago ID');
+      
+      if (duplicatePIX.rows.length > 0) {
+        throw new Error('PIX ID já existe no sistema');
+      }
 
       // Salvar dados do PIX no banco com logs detalhados
       console.log('Saving PIX to database with QR code data:', {

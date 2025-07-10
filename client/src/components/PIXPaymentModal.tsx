@@ -76,6 +76,8 @@ export function PIXPaymentModal({
   const [customerDocument, setCustomerDocument] = useState(customerData?.document || "");
   const [pixPayment, setPixPayment] = useState<PIXPayment | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showExistingPIXDialog, setShowExistingPIXDialog] = useState(false);
+  const [existingPIXData, setExistingPIXData] = useState<any>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -101,7 +103,8 @@ export function PIXPaymentModal({
   // Criar PIX
   const createPIXMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/mercadopago/create-pix", {
+      const endpoint = data.force ? "/api/mercadopago/create-pix-force" : "/api/mercadopago/create-pix";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -109,16 +112,25 @@ export function PIXPaymentModal({
       
       if (!response.ok) {
         const error = await response.json();
+        
+        // Se já existe PIX, mostrar dialog de confirmação
+        if (error.message === "PIX_ALREADY_EXISTS") {
+          setExistingPIXData(error.existingPIX);
+          setShowExistingPIXDialog(true);
+          setIsGenerating(false);
+          return null;
+        }
+        
         throw new Error(error.message || "Erro ao criar PIX");
       }
       
       return response.json();
     },
     onSuccess: (data) => {
+      if (!data) return; // Quando PIX já existe, data é null
+      
       console.log('PIX created successfully:', data);
-      // Garantir que o loading pare antes de mostrar o QR code
       setIsGenerating(false);
-      // Aguardar um pequeno delay para garantir que o estado seja atualizado
       setTimeout(() => {
         setPixPayment(data);
       }, 100);
@@ -144,7 +156,7 @@ export function PIXPaymentModal({
     return emailRegex.test(email);
   };
 
-  const handleGeneratePIX = () => {
+  const handleGeneratePIX = (force = false) => {
     const numericAmount = getNumericAmount();
     if (!amount || numericAmount <= 0) {
       toast({
@@ -173,7 +185,14 @@ export function PIXPaymentModal({
       customerEmail: finalEmail,
       customerName: customerName || "Cliente",
       customerDocument: customerDocument || "00000000000",
+      force,
     });
+  };
+
+  const handleForceNewPIX = () => {
+    setShowExistingPIXDialog(false);
+    setExistingPIXData(null);
+    handleGeneratePIX(true);
   };
 
   const copyToClipboard = async (text: string) => {
@@ -547,6 +566,68 @@ export function PIXPaymentModal({
           )}
         </div>
       </DialogContent>
+
+      {/* Dialog para PIX existente */}
+      <Dialog open={showExistingPIXDialog} onOpenChange={setShowExistingPIXDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-amber-600" />
+              PIX já existe
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-700">
+              <p className="text-amber-800 dark:text-amber-200 text-sm">
+                Já existe um PIX ativo para este serviço:
+              </p>
+              {existingPIXData && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-amber-700 dark:text-amber-300">Valor:</span>
+                    <span className="font-semibold text-amber-900 dark:text-amber-100">
+                      R$ {existingPIXData.amount.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-amber-700 dark:text-amber-300">Status:</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {getStatusText(existingPIXData.status)}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-amber-700 dark:text-amber-300">Criado em:</span>
+                    <span className="text-amber-900 dark:text-amber-100">
+                      {new Date(existingPIXData.createdAt).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Deseja gerar um novo PIX? O PIX atual será cancelado.
+            </p>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowExistingPIXDialog(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleForceNewPIX}
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+              >
+                Gerar Novo PIX
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
