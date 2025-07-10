@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 15% 98%;
+  --foreground: 220 13% 15%;
+  --muted: 220 15% 94%;
+  --muted-foreground: 220 8% 45%;
+  --popover: 220 15% 98%;
+  --popover-foreground: 220 13% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 13% 15%;
+  --border: 220 13% 88%;
+  --input: 220 13% 88%;
+  --primary: 195 100% 35%; /* #0081CB - CarHub Blue */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 195 15% 92%;
+  --secondary-foreground: 220 13% 15%;
+  --accent: 195 15% 92%;
+  --accent-foreground: 220 13% 15%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 195 100% 35%;
+  --radius: 0.75rem;
+  
+  /* Custom CarHub colors */
+  --sidebar-background: 220 30% 12%; /* Dark navy blue */
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 195 100% 35%; /* CarHub Blue */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 25% 18%; /* Lighter navy */
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 220 20% 22%;
+  --sidebar-ring: 195 100% 35%;
+  
+  /* Success colors */
+  --success: 142 76% 36%; /* Green for success */
+  --success-foreground: 0 0% 100%;
+  
+  /* Warning colors */
+  --warning: 45 93% 47%; /* Orange for warnings */
+  --warning-foreground: 0 0% 100%;
+  
+  /* Info colors */
+  --info: 195 100% 35%; /* CarHub blue for info */
+  --info-foreground: 0 0% 100%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 142 76% 36%;
+  --primary-foreground: 355 100% 97%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom styles for CarHub */
+.carhub-green {
+  background-color: #4CAF50;
+}
+
+.carhub-green-dark {
+  background-color: #2E7D32;
+}
+
+.carhub-sidebar {
+  background-color: #2C3E50;
+}
+
+.carhub-sidebar-light {
+  background-color: #34495E;
+}

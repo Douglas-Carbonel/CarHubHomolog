@@ -1,0 +1,1 @@
+// Backup temporário - será usado para restaurar funcionalidade

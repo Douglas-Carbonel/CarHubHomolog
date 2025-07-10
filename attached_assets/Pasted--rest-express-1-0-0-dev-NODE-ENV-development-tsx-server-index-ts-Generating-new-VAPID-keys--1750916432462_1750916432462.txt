@@ -1,0 +1,58 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Generating new VAPID keys...
+Generated VAPID keys:
+Public Key: BLQGyv5fbtqOUiIgx_ydwdpE0VvvXaYvcLoTt8IsNuVuKLMbBBf_GvnZKaVyBwdJCe1Qw8CUo9T50DSVREqt-AM
+Private Key: V6V_Q-pV7VuvsBjcgFYlepkl505xOWQiSXQKC48iRaU
+Add these to your environment variables for production
+Notification cron job scheduled - checking for reminders every minute
+Connected to PostgreSQL database
+Ensuring service_items table exists...
+Error ensuring service_items table: error: relation "service_items" already exists
+    at /home/runner/workspace/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async ensureServiceItemsTable (/home/runner/workspace/server/routes.ts:58:5)
+    at async registerRoutes (/home/runner/workspace/server/routes.ts:221:3)
+    at async <anonymous> (/home/runner/workspace/server/index.ts:40:18) {
+  length: 107,
+  severity: 'ERROR',
+  code: '42P07',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'heap.c',
+  line: '1159',
+  routine: 'heap_create_with_catalog'
+}
+Connected to PostgreSQL database
+Novos tipos de serviço adicionados com sucesso
+node:events:496
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+    at listenInCluster (node:net:1965:12)
+    at doListen (node:net:2139:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1944:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 5000
+}
+
+Node.js v20.18.1

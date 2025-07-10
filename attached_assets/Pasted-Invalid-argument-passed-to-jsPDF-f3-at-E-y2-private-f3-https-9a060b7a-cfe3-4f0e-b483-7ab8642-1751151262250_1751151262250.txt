@@ -1,0 +1,12 @@
+Invalid argument passed to jsPDF.f3
+at E.y2.__private__.f3 (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/jspdf.js?v=5e1c0b3f:2109:26)
+at E.y2.__private__.encodeColorString (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/jspdf.js?v=5e1c0b3f:2382:14)
+at E.y2.__private__.setTextColor.y2.setTextColor (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/jspdf.js?v=5e1c0b3f:3121:17)
+at handleGeneratePDF (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/src/pages/services.tsx:776:9)
+at HTMLUnknownElement.callCallback2 (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:3674:22)
+at Object.invokeGuardedCallbackDev (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:3699:24)
+at invokeGuardedCallback (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:3733:39)
+at invokeGuardedCallbackAndCatchFirstError (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:3736:33)
+at executeDispatch (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:7014:11)
+at processDispatchQueueItemsInOrder (https://9a060b7a-cfe3-4f0e-b483-7ab8642f039d-00-wei9a5qb9rk1.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=5e1c0b3f:7034:15)
+Invalid argument passed to jsPDF.f3
