@@ -122,15 +122,12 @@ export function PIXPaymentModal({
     },
     onSuccess: (data) => {
       console.log('PIX created successfully:', data);
-      // Garantir que o PIX payment seja definido primeiro
-      setTimeout(() => {
-        setPixPayment(data);
-        setIsGenerating(false);
-        toast({
-          title: "PIX gerado com sucesso!",
-          description: "O QR Code e chave PIX foram criados.",
-        });
-      }, 100);
+      setPixPayment(data);
+      setIsGenerating(false);
+      toast({
+        title: "PIX gerado com sucesso!",
+        description: "O QR Code e chave PIX foram criados.",
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
     },
     onError: (error) => {
@@ -149,7 +146,7 @@ export function PIXPaymentModal({
     return emailRegex.test(email);
   };
 
-  const handleGeneratePIX = async () => {
+  const handleGeneratePIX = () => {
     const numericAmount = getNumericAmount();
     if (!amount || numericAmount <= 0) {
       toast({
@@ -171,25 +168,14 @@ export function PIXPaymentModal({
     }
 
     setIsGenerating(true);
-    
-    try {
-      const pixData = await createPIXMutation.mutateAsync({
-        serviceId,
-        amount: numericAmount,
-        description: description || `Pagamento - Ordem de Serviço #${serviceId}`,
-        customerEmail: finalEmail,
-        customerName: customerName || "Cliente",
-        customerDocument: customerDocument || "00000000000",
-      });
-      
-      console.log('PIX generated, setting payment data:', pixData);
-      setPixPayment(pixData);
-      setIsGenerating(false);
-      
-    } catch (error) {
-      console.error('Error in handleGeneratePIX:', error);
-      setIsGenerating(false);
-    }
+    createPIXMutation.mutate({
+      serviceId,
+      amount: numericAmount,
+      description: description || `Pagamento - Ordem de Serviço #${serviceId}`,
+      customerEmail: finalEmail,
+      customerName: customerName || "Cliente",
+      customerDocument: customerDocument || "00000000000",
+    });
   };
 
   const copyToClipboard = async (text: string) => {
