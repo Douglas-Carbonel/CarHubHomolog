@@ -1816,8 +1816,9 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.status(404).json({ message: "Serviço não encontrado" });
       }
 
-      // REMOVER verificação de PIX existente - sempre criar novo para garantir QR code
-      console.log('Forcing new PIX creation to ensure QR code generation');
+      // LIMPAR TODOS os PIX existentes para este serviço
+      await db.execute(sql`DELETE FROM pix_payments WHERE service_id = ${serviceId}`);
+      console.log('Deleted all existing PIX for service:', serviceId);
 
       const paymentData = {
         amount: parseFloat(amount),
