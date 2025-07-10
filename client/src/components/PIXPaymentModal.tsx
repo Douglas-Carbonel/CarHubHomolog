@@ -80,11 +80,7 @@ export function PIXPaymentModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Buscar PIX existentes para este serviço
-  const { data: existingPIX } = useQuery({
-    queryKey: [`/api/mercadopago/service/${serviceId}/pix`],
-    enabled: open && serviceId > 0,
-  });
+  // Remover query automática que causava problema - PIX só é buscado quando necessário
 
   // Criar PIX
   const createPIXMutation = useMutation({
