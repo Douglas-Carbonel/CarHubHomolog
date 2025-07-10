@@ -94,17 +94,26 @@ export function PIXPaymentModal({
     onSuccess: (data) => {
       if (data && data.length > 0) {
         const latestPIX = data[0]; // PIX mais recente
-        setExistingPIX({
-          id: latestPIX.mercado_pago_id,
-          status: latestPIX.status,
-          qrCode: latestPIX.qr_code_text,
-          qrCodeBase64: latestPIX.qr_code_base64,
-          pixCopyPaste: latestPIX.qr_code_text,
-          expirationDate: latestPIX.expires_at,
-          amount: parseFloat(latestPIX.amount)
-        });
+        // Só considerar PIX pendentes como existentes
+        if (latestPIX.status === 'pending') {
+          setExistingPIX({
+            id: latestPIX.mercado_pago_id,
+            status: latestPIX.status,
+            qrCode: latestPIX.qr_code_text,
+            qrCodeBase64: latestPIX.qr_code_base64,
+            pixCopyPaste: latestPIX.qr_code_text,
+            expirationDate: latestPIX.expires_at,
+            amount: parseFloat(latestPIX.amount)
+          });
+          // Automaticamente mostrar o modal de confirmação quando há PIX existente
+          setShowConfirmOverwrite(true);
+        } else {
+          setExistingPIX(null);
+          setShowConfirmOverwrite(false);
+        }
       } else {
         setExistingPIX(null);
+        setShowConfirmOverwrite(false);
       }
     }
   });
@@ -196,13 +205,10 @@ export function PIXPaymentModal({
       return;
     }
 
-    // Verificar se já existe PIX para este serviço
-    if (existingPIX && !showConfirmOverwrite) {
-      setShowConfirmOverwrite(true);
-      return;
-    }
-
+    // Iniciar geração do PIX diretamente
     setIsGenerating(true);
+    setShowConfirmOverwrite(false); // Esconder modal de confirmação
+    
     createPIXMutation.mutate({
       serviceId,
       amount: numericAmount,
@@ -214,13 +220,14 @@ export function PIXPaymentModal({
   };
 
   const handleConfirmOverwrite = () => {
+    // Fechar modal de confirmação e continuar com formulário
     setShowConfirmOverwrite(false);
-    setExistingPIX(null);
-    handleGeneratePIX();
+    setExistingPIX(null); // Limpar PIX existente para permitir novo
   };
 
   const handleCancelOverwrite = () => {
-    setShowConfirmOverwrite(false);
+    // Fechar o modal completamente
+    onOpenChange(false);
   };
 
   const handleUseExistingPIX = () => {
@@ -346,16 +353,16 @@ export function PIXPaymentModal({
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <QrCode className="h-4 w-4 mr-2" />
-                    Usar PIX Existente
+                    Mostrar PIX Existente
                   </Button>
                   
                   <Button
                     onClick={handleConfirmOverwrite}
                     variant="outline"
-                    className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+                    className="w-full border-green-300 text-green-700 hover:bg-green-50"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Gerar novo PIX
+                    Sim, gerar novo
                   </Button>
                   
                   <Button
