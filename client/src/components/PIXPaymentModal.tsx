@@ -103,6 +103,15 @@ export function PIXPaymentModal({
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('PIX Response received:', {
+        id: data.id,
+        status: data.status,
+        hasQrCode: !!data.qrCode,
+        hasQrCodeBase64: !!data.qrCodeBase64,
+        qrCodeBase64Length: data.qrCodeBase64?.length || 0,
+        qrCodeBase64Preview: data.qrCodeBase64?.substring(0, 50) || 'empty',
+        startsWithDataImage: data.qrCodeBase64?.startsWith('data:image/') || false
+      });
       setPixPayment(data);
       setIsGenerating(false);
       toast({
@@ -402,6 +411,15 @@ export function PIXPaymentModal({
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100">Escaneie o QR Code</h4>
                   </div>
                   
+                  {(() => {
+                    console.log('PIX Debug - QR Code Info:', {
+                      hasQrCodeBase64: !!pixPayment.qrCodeBase64,
+                      qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0,
+                      qrCodeBase64Preview: pixPayment.qrCodeBase64?.substring(0, 50) || 'empty',
+                      startsWithDataImage: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
+                    });
+                    return null;
+                  })()}
                   {pixPayment.qrCodeBase64 && pixPayment.qrCodeBase64.startsWith('data:image/') ? (
                     <div className="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
                       <img

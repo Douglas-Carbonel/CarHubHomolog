@@ -1794,7 +1794,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
           id: existingPayment.mercado_pago_id,
           status: existingPayment.status,
           qrCode: existingPayment.qr_code_text,
-          qrCodeBase64: existingPayment.qr_code_text, // Para compatibilidade
+          qrCodeBase64: existingPayment.qr_code_base64, // Campo correto para a imagem base64
           pixCopyPaste: existingPayment.qr_code_text,
           expirationDate: existingPayment.expires_at,
           amount: parseFloat(existingPayment.amount)
@@ -1824,7 +1824,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         hasQrCode: !!pixPayment.qrCode,
         hasQrCodeBase64: !!pixPayment.qrCodeBase64,
         qrCodeLength: pixPayment.qrCodeBase64?.length || 0,
-        qrCodePreview: pixPayment.qrCodeBase64?.substring(0, 50) || 'N/A'
+        qrCodePreview: pixPayment.qrCodeBase64?.substring(0, 50) || 'N/A',
+        qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
       // Verificar se o mercado_pago_id já existe antes de inserir
@@ -1843,7 +1844,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
           id: existing.mercado_pago_id,
           status: existing.status,
           qrCode: existing.qr_code_text,
-          qrCodeBase64: existing.qr_code_text,
+          qrCodeBase64: existing.qr_code_base64, // Campo correto para a imagem base64
           pixCopyPaste: existing.qr_code_text,
           expirationDate: existing.expires_at,
           amount: parseFloat(existing.amount)
