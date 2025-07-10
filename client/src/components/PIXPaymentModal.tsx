@@ -234,8 +234,8 @@ export function PIXPaymentModal({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* PIX existentes */}
-          {existingPIX && existingPIX.length > 0 && (
+          {/* PIX existentes - removido para corrigir erro */}
+          {false && (
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="h-4 w-4 text-gray-600 dark:text-gray-400" />
