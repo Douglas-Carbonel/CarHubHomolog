@@ -121,6 +121,7 @@ export function PIXPaymentModal({
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('PIX created successfully:', data);
       setPixPayment(data);
       setIsGenerating(false);
       toast({
@@ -130,6 +131,7 @@ export function PIXPaymentModal({
       queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
     },
     onError: (error) => {
+      console.error('PIX creation error:', error);
       setIsGenerating(false);
       toast({
         title: "Erro ao gerar PIX",
@@ -236,7 +238,23 @@ export function PIXPaymentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      console.log('PIX Modal onOpenChange:', newOpen);
+      if (!newOpen) {
+        // Reset states when closing
+        setPixPayment(null);
+        setIsGenerating(false);
+        setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }) : "");
+        setDescription("");
+        setCustomerEmail(customerData?.email || "cliente@exemplo.com");
+        setCustomerName(customerData?.name || "");
+        setCustomerDocument(customerData?.document || "");
+      }
+      onOpenChange(newOpen);
+    }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
@@ -370,10 +388,10 @@ export function PIXPaymentModal({
 
               <Button 
                 onClick={handleGeneratePIX} 
-                disabled={isGenerating || !amount}
-                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                disabled={isGenerating || !amount || createPIXMutation.isPending}
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white disabled:opacity-50"
               >
-                {isGenerating ? (
+                {(isGenerating || createPIXMutation.isPending) ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Gerando PIX...
@@ -526,14 +544,21 @@ export function PIXPaymentModal({
               {/* Ações */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={() => setPixPayment(null)}
+                  onClick={() => {
+                    console.log('Clearing PIX payment to generate new one');
+                    setPixPayment(null);
+                    setIsGenerating(false);
+                  }}
                   variant="outline"
                   className="flex-1 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   Gerar Novo PIX
                 </Button>
                 <Button
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => {
+                    console.log('Closing PIX modal');
+                    onOpenChange(false);
+                  }}
                   className="flex-1"
                 >
                   Fechar

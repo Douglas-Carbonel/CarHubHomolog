@@ -2600,7 +2600,13 @@ rounded-lg p-4">
         {selectedServiceForPIX && (
           <PIXPaymentModal
             open={isPIXModalOpen}
-            onOpenChange={setIsPIXModalOpen}
+            onOpenChange={(open) => {
+              console.log('Services page - PIX modal state change:', open);
+              setIsPIXModalOpen(open);
+              if (!open) {
+                setSelectedServiceForPIX(null);
+              }
+            }}
             serviceId={selectedServiceForPIX}
             defaultAmount={(() => {
               const service = services.find(s => s.id === selectedServiceForPIX);
@@ -2615,7 +2621,7 @@ rounded-lg p-4">
               return {
                 name: service.customer?.firstName && service.customer?.lastName 
                   ? `${service.customer.firstName} ${service.customer.lastName}` 
-                  : service.customer?.firstName || '',
+                  : service.customer?.firstName || service.customer?.name || '',
                 email: service.customer?.email || '',
                 document: service.customer?.document || ''
               };
