@@ -64,7 +64,44 @@ async function ensurePixPaymentsTable() {
     `);
 
     if (tableExists.rows[0]?.exists) {
-      console.log('pix_payments table already exists - skipping creation');
+      console.log('pix_payments table already exists - checking for missing fields...');
+      
+      // Verificar se o campo qr_code_base64 existe
+      const qrCodeBase64Exists = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'pix_payments'
+          AND column_name = 'qr_code_base64'
+        )
+      `);
+
+      if (!qrCodeBase64Exists.rows[0]?.exists) {
+        console.log('Adding qr_code_base64 field to pix_payments table...');
+        await db.execute(sql`
+          ALTER TABLE pix_payments 
+          ADD COLUMN qr_code_base64 TEXT;
+        `);
+        console.log('✅ qr_code_base64 field added successfully');
+      }
+
+      // Verificar se o campo external_reference existe
+      const extRefExists = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'pix_payments'
+          AND column_name = 'external_reference'
+        )
+      `);
+
+      if (!extRefExists.rows[0]?.exists) {
+        console.log('Adding external_reference field to pix_payments table...');
+        await db.execute(sql`
+          ALTER TABLE pix_payments 
+          ADD COLUMN external_reference VARCHAR;
+        `);
+        console.log('✅ external_reference field added successfully');
+      }
+
       return;
     }
 
@@ -1793,10 +1830,10 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.json({
           id: existingPayment.mercado_pago_id,
           status: existingPayment.status,
-          qrCode: existingPayment.qr_code,
+          qrCode: existingPayment.qr_code_text,
           qrCodeBase64: existingPayment.qr_code_base64,
-          pixCopyPaste: existingPayment.qr_code,
-          expirationDate: existingPayment.expiration_date,
+          pixCopyPaste: existingPayment.qr_code_text,
+          expirationDate: existingPayment.expires_at,
           amount: parseFloat(existingPayment.amount)
         });
       }
@@ -1843,10 +1880,10 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.json({
           id: existing.mercado_pago_id,
           status: existing.status,
-          qrCode: existing.qr_code,
+          qrCode: existing.qr_code_text,
           qrCodeBase64: existing.qr_code_base64,
-          pixCopyPaste: existing.qr_code,
-          expirationDate: existing.expiration_date,
+          pixCopyPaste: existing.qr_code_text,
+          expirationDate: existing.expires_at,
           amount: parseFloat(existing.amount)
         });
       }
@@ -1855,7 +1892,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       await db.execute(sql`
         INSERT INTO pix_payments (
           service_id, mercado_pago_id, amount, status, 
-          qr_code, qr_code_base64, expiration_date, external_reference
+          qr_code_text, qr_code_base64, expires_at, external_reference
         ) VALUES (
           ${serviceId}, ${pixPayment.id}, ${amount}, ${pixPayment.status},
           ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}
@@ -1882,7 +1919,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       await db.execute(sql`
         UPDATE pix_payments 
         SET status = ${paymentStatus.status}, 
-            approved_date = ${paymentStatus.date_approved},
+            paid_at = ${paymentStatus.date_approved},
             updated_at = NOW()
         WHERE mercado_pago_id = ${paymentId}
       `);
@@ -1934,7 +1971,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
           await db.execute(sql`
             UPDATE pix_payments 
             SET status = ${paymentStatus.status}, 
-                approved_date = ${paymentStatus.date_approved},
+                paid_at = ${paymentStatus.date_approved},
                 updated_at = NOW()
             WHERE mercado_pago_id = ${paymentId}
           `);
