@@ -128,6 +128,8 @@ This is a comprehensive automotive service management system built as a full-sta
 
 ```
 Changelog:
+- July 10, 2025. ENHANCED: PIX system now maintains complete transaction history - no more deletion of existing PIX records, all transactions preserved
+- July 10, 2025. ADDED: Smart PIX validation system - automatically detects existing active PIX and prompts user with options to use existing or generate new
 - July 10, 2025. FIXED: PIX modal now stays on QR Code screen until payment is made or user closes modal - resolved state interference issue that was causing return to form screen
 - July 10, 2025. PIX payment flow logic completely refined to match exact user requirements - improved screen flow, automatic PIX detection, and proper confirmation dialogs
 - July 10, 2025. PIX payment flow enhanced to match exact business requirements - confirmation dialog updated with proper messaging and button labels

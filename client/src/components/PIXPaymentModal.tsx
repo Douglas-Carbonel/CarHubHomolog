@@ -100,24 +100,28 @@ export function PIXPaymentModal({
       }
       
       if (data && data.length > 0) {
-        const latestPIX = data[0]; // PIX mais recente
-        // Só considerar PIX pendentes como existentes
-        if (latestPIX.status === 'pending') {
+        // Buscar PIX pendentes (ativos)
+        const activePIX = data.find((pix: any) => pix.status === 'pending');
+        
+        if (activePIX) {
+          console.log('Found active PIX for service:', serviceId, 'status:', activePIX.status);
           setExistingPIX({
-            id: latestPIX.mercado_pago_id,
-            status: latestPIX.status,
-            qrCode: latestPIX.qr_code_text,
-            qrCodeBase64: latestPIX.qr_code_base64,
-            pixCopyPaste: latestPIX.qr_code_text,
-            expirationDate: latestPIX.expires_at,
-            amount: parseFloat(latestPIX.amount)
+            id: activePIX.mercado_pago_id,
+            status: activePIX.status,
+            qrCode: activePIX.qr_code_text,
+            qrCodeBase64: activePIX.qr_code_base64,
+            pixCopyPaste: activePIX.qr_code_text,
+            expirationDate: activePIX.expires_at,
+            amount: parseFloat(activePIX.amount)
           });
           setShowConfirmOverwrite(true);
         } else {
+          console.log('No active PIX found for service:', serviceId, '- total PIX records:', data.length);
           setExistingPIX(null);
           setShowConfirmOverwrite(false);
         }
       } else {
+        console.log('No PIX records found for service:', serviceId);
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
       }
@@ -345,17 +349,20 @@ export function PIXPaymentModal({
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
-                    Já existe um PIX em aberto para esta ordem
+                    QR Code PIX já existe para este serviço!
                   </h3>
                   <p className="text-orange-600 dark:text-orange-300 text-sm">
-                    Já existe um PIX gerado no valor de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> para este serviço.
+                    Há um PIX de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> em aberto para esta ordem de serviço.
                   </p>
                   <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
                     Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
                   </p>
-                  <p className="text-orange-700 dark:text-orange-300 text-sm mt-3 font-medium">
-                    Deseja gerar um novo?
-                  </p>
+                  
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
+                    <p className="text-xs text-orange-600 dark:text-orange-400">
+                      💡 <strong>Dica:</strong> Você pode usar o PIX existente ou gerar um novo. O anterior permanecerá salvo no histórico.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -381,7 +388,7 @@ export function PIXPaymentModal({
                     className="w-full border-green-300 text-green-700 hover:bg-green-50"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Sim, gerar novo
+                    Gerar Novo PIX
                   </Button>
                   
                   <Button

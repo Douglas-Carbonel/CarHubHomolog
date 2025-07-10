@@ -1816,9 +1816,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.status(404).json({ message: "Serviço não encontrado" });
       }
 
-      // LIMPAR TODOS os PIX existentes para este serviço
-      await db.execute(sql`DELETE FROM pix_payments WHERE service_id = ${serviceId}`);
-      console.log('Deleted all existing PIX for service:', serviceId);
+      // NÃO deletar PIX existentes - manter histórico completo
+      console.log('Creating new PIX payment for service:', serviceId, '(keeping existing PIX history)');
 
       const paymentData = {
         amount: parseFloat(amount),
@@ -1847,11 +1846,14 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
-      // DELETAR qualquer PIX existente com mesmo ID para garantir dados limpos
-      await db.execute(sql`
-        DELETE FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
+      // Verificar se já existe PIX com mesmo MercadoPago ID (improvável mas possível)
+      const existingPixWithSameId = await db.execute(sql`
+        SELECT id FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
       `);
-      console.log('Deleted any existing PIX with same MercadoPago ID');
+      
+      if (existingPixWithSameId.length > 0) {
+        console.log('Found existing PIX with same MercadoPago ID - this is unusual but will keep both records');
+      }
 
       // Salvar dados do PIX no banco com logs detalhados
       console.log('Saving PIX to database with QR code data:', {
