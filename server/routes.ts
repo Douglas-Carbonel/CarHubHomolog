@@ -1816,35 +1816,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.status(404).json({ message: "Serviço não encontrado" });
       }
 
-      // Verificar se já existe um PIX pendente para este serviço
-      const existingPix = await db.execute(sql`
-        SELECT * FROM pix_payments 
-        WHERE service_id = ${serviceId} AND status IN ('pending', 'in_process')
-        ORDER BY created_at DESC 
-        LIMIT 1
-      `);
-
-      if (existingPix.rows.length > 0) {
-        const existingPayment = existingPix.rows[0];
-        console.log('PIX payment already exists for service:', serviceId);
-        console.log('Existing payment data:', {
-          id: existingPayment.mercado_pago_id,
-          qr_code_text: existingPayment.qr_code_text?.substring(0, 50) || 'null',
-          qr_code_base64: existingPayment.qr_code_base64?.substring(0, 50) || 'null',
-          qr_code_base64_full_length: existingPayment.qr_code_base64?.length || 0,
-          qr_code_base64_starts_with_data: existingPayment.qr_code_base64?.startsWith('data:image/') || false
-        });
-        
-        return res.json({
-          id: existingPayment.mercado_pago_id,
-          status: existingPayment.status,
-          qrCode: existingPayment.qr_code_text,
-          qrCodeBase64: existingPayment.qr_code_base64,
-          pixCopyPaste: existingPayment.qr_code_text,
-          expirationDate: existingPayment.expires_at,
-          amount: parseFloat(existingPayment.amount)
-        });
-      }
+      // REMOVER verificação de PIX existente - sempre criar novo para garantir QR code
+      console.log('Forcing new PIX creation to ensure QR code generation');
 
       const paymentData = {
         amount: parseFloat(amount),
@@ -1873,38 +1846,35 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
-      // Verificar se o mercado_pago_id já existe e atualizar se necessário
-      const existingMercadoPagoId = await db.execute(sql`
-        SELECT * FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
+      // DELETAR qualquer PIX existente com mesmo ID para garantir dados limpos
+      await db.execute(sql`
+        DELETE FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
       `);
+      console.log('Deleted any existing PIX with same MercadoPago ID');
 
-      if (existingMercadoPagoId.rows.length > 0) {
-        console.log('MercadoPago ID already exists, updating with new QR code data');
-        // Atualizar o registro existente com os novos dados do QR code
-        await db.execute(sql`
-          UPDATE pix_payments 
-          SET qr_code_text = ${pixPayment.qrCode},
-              qr_code_base64 = ${pixPayment.qrCodeBase64},
-              expires_at = ${pixPayment.expirationDate},
-              status = ${pixPayment.status},
-              updated_at = NOW()
-          WHERE mercado_pago_id = ${pixPayment.id}
-        `);
-        
-        console.log('Updated existing PIX payment with QR code data');
-        return res.json(pixPayment);
-      }
-
-      // Salvar dados do PIX no banco
+      // Salvar dados do PIX no banco com logs detalhados
+      console.log('Saving PIX to database with QR code data:', {
+        serviceId,
+        mercadoPagoId: pixPayment.id,
+        amount,
+        status: pixPayment.status,
+        qrCodeLength: pixPayment.qrCode?.length || 0,
+        qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0,
+        hasQrCodeBase64: !!pixPayment.qrCodeBase64,
+        qrCodeBase64Preview: pixPayment.qrCodeBase64?.substring(0, 50) || 'EMPTY'
+      });
+      
       await db.execute(sql`
         INSERT INTO pix_payments (
           service_id, mercado_pago_id, amount, status, 
-          qr_code_text, qr_code_base64, expires_at, external_reference
+          qr_code_text, qr_code_base64, expires_at, external_reference, created_at
         ) VALUES (
           ${serviceId}, ${pixPayment.id}, ${amount}, ${pixPayment.status},
-          ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}
+          ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}, NOW()
         )
       `);
+      
+      console.log('PIX saved to database successfully');
 
       res.json(pixPayment);
     } catch (error) {
