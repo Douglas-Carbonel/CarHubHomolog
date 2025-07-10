@@ -94,13 +94,7 @@ export function PIXPaymentModal({
     setIsGenerating(false);
   }, [serviceId, defaultAmount, customerData]);
 
-  // Limpar estado quando o modal fechar
-  useEffect(() => {
-    if (!open) {
-      setPixPayment(null);
-      setIsGenerating(false);
-    }
-  }, [open]);
+  // Estado será limpo apenas quando necessário via onOpenChange
 
   // Remover query automática que causava problema - PIX só é buscado quando necessário
 
@@ -238,23 +232,7 @@ export function PIXPaymentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      console.log('PIX Modal onOpenChange:', newOpen);
-      if (!newOpen) {
-        // Reset states when closing
-        setPixPayment(null);
-        setIsGenerating(false);
-        setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }) : "");
-        setDescription("");
-        setCustomerEmail(customerData?.email || "cliente@exemplo.com");
-        setCustomerName(customerData?.name || "");
-        setCustomerDocument(customerData?.document || "");
-      }
-      onOpenChange(newOpen);
-    }}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
@@ -576,6 +554,17 @@ export function PIXPaymentModal({
                 <Button
                   onClick={() => {
                     console.log('Closing PIX modal');
+                    // Reset states when closing manually
+                    setPixPayment(null);
+                    setIsGenerating(false);
+                    setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    }) : "");
+                    setDescription("");
+                    setCustomerEmail(customerData?.email || "cliente@exemplo.com");
+                    setCustomerName(customerData?.name || "");
+                    setCustomerDocument(customerData?.document || "");
                     onOpenChange(false);
                   }}
                   className="flex-1"
