@@ -22,28 +22,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        try {
-          // Tentar serializar com tratamento de erro circular
-          const jsonString = JSON.stringify(capturedJsonResponse, (key, value) => {
-            // Evitar referências circulares
-            if (typeof value === 'object' && value !== null) {
-              if (value.constructor === Object) {
-                // Para objetos simples, remover propriedades que podem causar ciclos
-                const cleaned = { ...value };
-                delete cleaned.customer?.services;
-                delete cleaned.vehicle?.services;
-                delete cleaned.service?.customer?.services;
-                delete cleaned.service?.vehicle?.services;
-                return cleaned;
-              }
-            }
-            return value;
-          });
-          logLine += ` :: ${jsonString}`;
-        } catch (circularError) {
-          // Se ainda houver erro circular, logar apenas o tipo de resposta
-          logLine += ` :: [Object - circular reference avoided]`;
-        }
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
       if (logLine.length > 80) {
