@@ -1826,7 +1826,15 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
 
       if (existingPix.rows.length > 0) {
         const existingPayment = existingPix.rows[0];
-        console.log('PIX payment already exists for service:', serviceId, 'returning existing payment');
+        console.log('PIX payment already exists for service:', serviceId);
+        console.log('Existing payment data:', {
+          id: existingPayment.mercado_pago_id,
+          qr_code_text: existingPayment.qr_code_text?.substring(0, 50) || 'null',
+          qr_code_base64: existingPayment.qr_code_base64?.substring(0, 50) || 'null',
+          qr_code_base64_full_length: existingPayment.qr_code_base64?.length || 0,
+          qr_code_base64_starts_with_data: existingPayment.qr_code_base64?.startsWith('data:image/') || false
+        });
+        
         return res.json({
           id: existingPayment.mercado_pago_id,
           status: existingPayment.status,
