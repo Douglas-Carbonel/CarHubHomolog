@@ -82,7 +82,7 @@ export function PIXPaymentModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Verificar PIX existente quando o modal abrir
+  // Verificar PIX existente apenas na abertura do modal
   const checkExistingPIX = useQuery({
     queryKey: [`/api/mercadopago/service/${serviceId}/pix`],
     queryFn: async () => {
@@ -90,10 +90,12 @@ export function PIXPaymentModal({
       if (!response.ok) throw new Error("Erro ao verificar PIX existente");
       return response.json();
     },
-    enabled: open && serviceId > 0,
+    // Só ativar query na primeira vez que o modal abre, nunca depois
+    enabled: open && serviceId > 0 && !pixPayment && !isGenerating,
     onSuccess: (data) => {
-      // Não processar se já há PIX gerado (para não interferir)
-      if (pixPayment) {
+      // NUNCA processar se há PIX gerado ou se está gerando
+      if (pixPayment || isGenerating) {
+        console.log('Ignorando query result - PIX já existe ou gerando');
         return;
       }
       
@@ -110,7 +112,6 @@ export function PIXPaymentModal({
             expirationDate: latestPIX.expires_at,
             amount: parseFloat(latestPIX.amount)
           });
-          // Automaticamente mostrar o modal de confirmação quando há PIX existente
           setShowConfirmOverwrite(true);
         } else {
           setExistingPIX(null);
@@ -121,25 +122,35 @@ export function PIXPaymentModal({
         setShowConfirmOverwrite(false);
       }
     },
-    refetchOnWindowFocus: false, // Não recarregar quando janela ganha foco
-    staleTime: 60000, // Considerar dados válidos por 1 minuto
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: Infinity, // Nunca considerar dados antigos
   });
 
-  // Limpar estado quando o serviceId mudar
+  // Limpar estado APENAS quando serviceId mudar (não customerData)
   useEffect(() => {
-    setPixPayment(null);
-    setExistingPIX(null);
-    setShowConfirmOverwrite(false);
-    setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }) : "");
-    setDescription("");
-    setCustomerEmail(customerData?.email || "cliente@exemplo.com");
-    setCustomerName(customerData?.name || "");
-    setCustomerDocument(customerData?.document || "");
-    setIsGenerating(false);
-  }, [serviceId, defaultAmount, customerData]);
+    if (serviceId > 0) {
+      setPixPayment(null);
+      setExistingPIX(null);
+      setShowConfirmOverwrite(false);
+      setIsGenerating(false);
+    }
+  }, [serviceId]);
+
+  // Configurar dados iniciais apenas quando modal abrir pela primeira vez
+  useEffect(() => {
+    if (open && serviceId > 0 && !pixPayment) {
+      setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) : "");
+      setDescription("");
+      setCustomerEmail(customerData?.email || "cliente@exemplo.com");
+      setCustomerName(customerData?.name || "");
+      setCustomerDocument(customerData?.document || "");
+    }
+  }, [open, serviceId]); // Não incluir customerData para evitar resets
 
   // Estado será limpo apenas quando necessário via onOpenChange
 
@@ -163,15 +174,13 @@ export function PIXPaymentModal({
     },
     onSuccess: (data) => {
       console.log('PIX created successfully:', data);
-      // Parar loading primeiro
+      // Definir estados imediatamente e de forma permanente
       setIsGenerating(false);
+      setPixPayment(data);
+      setExistingPIX(null);
+      setShowConfirmOverwrite(false);
       
-      // Aguardar um momento e depois definir o PIX
-      setTimeout(() => {
-        setPixPayment(data);
-        setExistingPIX(null);
-        setShowConfirmOverwrite(false);
-      }, 200);
+      console.log('PIX states set - should show QR code now');
       
       toast({
         title: "PIX gerado com sucesso!",
