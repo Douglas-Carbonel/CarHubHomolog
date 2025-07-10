@@ -122,12 +122,15 @@ export function PIXPaymentModal({
     },
     onSuccess: (data) => {
       console.log('PIX created successfully:', data);
-      setPixPayment(data);
-      setIsGenerating(false);
-      toast({
-        title: "PIX gerado com sucesso!",
-        description: "O QR Code e chave PIX foram criados.",
-      });
+      // Garantir que o PIX payment seja definido primeiro
+      setTimeout(() => {
+        setPixPayment(data);
+        setIsGenerating(false);
+        toast({
+          title: "PIX gerado com sucesso!",
+          description: "O QR Code e chave PIX foram criados.",
+        });
+      }, 100);
       queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
     },
     onError: (error) => {
@@ -146,7 +149,7 @@ export function PIXPaymentModal({
     return emailRegex.test(email);
   };
 
-  const handleGeneratePIX = () => {
+  const handleGeneratePIX = async () => {
     const numericAmount = getNumericAmount();
     if (!amount || numericAmount <= 0) {
       toast({
@@ -168,14 +171,25 @@ export function PIXPaymentModal({
     }
 
     setIsGenerating(true);
-    createPIXMutation.mutate({
-      serviceId,
-      amount: numericAmount,
-      description: description || `Pagamento - Ordem de Serviço #${serviceId}`,
-      customerEmail: finalEmail,
-      customerName: customerName || "Cliente",
-      customerDocument: customerDocument || "00000000000",
-    });
+    
+    try {
+      const pixData = await createPIXMutation.mutateAsync({
+        serviceId,
+        amount: numericAmount,
+        description: description || `Pagamento - Ordem de Serviço #${serviceId}`,
+        customerEmail: finalEmail,
+        customerName: customerName || "Cliente",
+        customerDocument: customerDocument || "00000000000",
+      });
+      
+      console.log('PIX generated, setting payment data:', pixData);
+      setPixPayment(pixData);
+      setIsGenerating(false);
+      
+    } catch (error) {
+      console.error('Error in handleGeneratePIX:', error);
+      setIsGenerating(false);
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -308,7 +322,7 @@ export function PIXPaymentModal({
           )}
 
           {/* Geração de novo PIX */}
-          {!pixPayment && (
+          {!pixPayment && !isGenerating && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -406,8 +420,27 @@ export function PIXPaymentModal({
             </div>
           )}
 
+          {/* Loading durante geração */}
+          {isGenerating && (
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-6 space-y-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-blue-800 dark:text-blue-200 mb-2">
+                    Gerando PIX...
+                  </h3>
+                  <p className="text-blue-600 dark:text-blue-300">
+                    Aguarde enquanto criamos seu QR Code PIX
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* PIX gerado */}
-          {pixPayment && (
+          {pixPayment && !isGenerating && (
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl p-6 space-y-6">
               {/* Header de sucesso */}
               <div className="text-center space-y-3">
