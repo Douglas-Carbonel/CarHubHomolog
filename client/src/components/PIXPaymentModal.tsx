@@ -319,13 +319,16 @@ export function PIXPaymentModal({
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
-                    PIX já existe para este serviço
+                    Já existe um PIX em aberto para esta ordem
                   </h3>
                   <p className="text-orange-600 dark:text-orange-300 text-sm">
                     Já existe um PIX gerado no valor de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> para este serviço.
                   </p>
                   <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
                     Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
+                  </p>
+                  <p className="text-orange-700 dark:text-orange-300 text-sm mt-3 font-medium">
+                    Deseja gerar um novo?
                   </p>
                 </div>
               </div>
@@ -352,7 +355,7 @@ export function PIXPaymentModal({
                     className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Gerar Novo PIX (substituir)
+                    Gerar novo PIX
                   </Button>
                   
                   <Button

@@ -128,6 +128,7 @@ This is a comprehensive automotive service management system built as a full-sta
 
 ```
 Changelog:
+- July 10, 2025. PIX payment flow enhanced to match exact business requirements - confirmation dialog updated with proper messaging and button labels
 - July 10, 2025. Successfully completed migration from Replit Agent to standard Replit environment - all PIX functionality, database connections, and security practices verified working
 - July 10, 2025. SOLVED: Fixed critical database schema issue preventing QR code display - added missing qr_code_base64 and external_reference fields to pix_payments table
 - July 10, 2025. Corrected all field name mismatches between code and actual Supabase table structure (qr_code_text, expires_at, paid_at)
