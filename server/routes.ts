@@ -1793,10 +1793,10 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.json({
           id: existingPayment.mercado_pago_id,
           status: existingPayment.status,
-          qrCode: existingPayment.qr_code_text,
-          qrCodeBase64: existingPayment.qr_code_base64, // Campo correto para a imagem base64
-          pixCopyPaste: existingPayment.qr_code_text,
-          expirationDate: existingPayment.expires_at,
+          qrCode: existingPayment.qr_code,
+          qrCodeBase64: existingPayment.qr_code_base64,
+          pixCopyPaste: existingPayment.qr_code,
+          expirationDate: existingPayment.expiration_date,
           amount: parseFloat(existingPayment.amount)
         });
       }
@@ -1843,10 +1843,10 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.json({
           id: existing.mercado_pago_id,
           status: existing.status,
-          qrCode: existing.qr_code_text,
-          qrCodeBase64: existing.qr_code_base64, // Campo correto para a imagem base64
-          pixCopyPaste: existing.qr_code_text,
-          expirationDate: existing.expires_at,
+          qrCode: existing.qr_code,
+          qrCodeBase64: existing.qr_code_base64,
+          pixCopyPaste: existing.qr_code,
+          expirationDate: existing.expiration_date,
           amount: parseFloat(existing.amount)
         });
       }
@@ -1855,7 +1855,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       await db.execute(sql`
         INSERT INTO pix_payments (
           service_id, mercado_pago_id, amount, status, 
-          qr_code_text, qr_code_base64, expires_at, external_reference
+          qr_code, qr_code_base64, expiration_date, external_reference
         ) VALUES (
           ${serviceId}, ${pixPayment.id}, ${amount}, ${pixPayment.status},
           ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}
@@ -1882,7 +1882,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       await db.execute(sql`
         UPDATE pix_payments 
         SET status = ${paymentStatus.status}, 
-            paid_at = ${paymentStatus.date_approved},
+            approved_date = ${paymentStatus.date_approved},
             updated_at = NOW()
         WHERE mercado_pago_id = ${paymentId}
       `);
@@ -1934,7 +1934,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
           await db.execute(sql`
             UPDATE pix_payments 
             SET status = ${paymentStatus.status}, 
-                paid_at = ${paymentStatus.date_approved},
+                approved_date = ${paymentStatus.date_approved},
                 updated_at = NOW()
             WHERE mercado_pago_id = ${paymentId}
           `);
