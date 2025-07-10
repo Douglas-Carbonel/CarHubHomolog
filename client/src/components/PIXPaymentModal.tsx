@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { QrCode, Copy, Clock, CheckCircle, XCircle, CreditCard, Smartphone, AlertCircle } from "lucide-react";
+import { QrCode, Copy, Clock, CheckCircle, XCircle, CreditCard, Smartphone, AlertCircle, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -76,13 +76,44 @@ export function PIXPaymentModal({
   const [customerDocument, setCustomerDocument] = useState(customerData?.document || "");
   const [pixPayment, setPixPayment] = useState<PIXPayment | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [existingPIX, setExistingPIX] = useState<PIXPayment | null>(null);
+  const [showConfirmOverwrite, setShowConfirmOverwrite] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Verificar PIX existente quando o modal abrir
+  const checkExistingPIX = useQuery({
+    queryKey: [`/api/mercadopago/service/${serviceId}/pix`],
+    queryFn: async () => {
+      const response = await fetch(`/api/mercadopago/service/${serviceId}/pix`);
+      if (!response.ok) throw new Error("Erro ao verificar PIX existente");
+      return response.json();
+    },
+    enabled: open && serviceId > 0,
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        const latestPIX = data[0]; // PIX mais recente
+        setExistingPIX({
+          id: latestPIX.mercado_pago_id,
+          status: latestPIX.status,
+          qrCode: latestPIX.qr_code_text,
+          qrCodeBase64: latestPIX.qr_code_base64,
+          pixCopyPaste: latestPIX.qr_code_text,
+          expirationDate: latestPIX.expires_at,
+          amount: parseFloat(latestPIX.amount)
+        });
+      } else {
+        setExistingPIX(null);
+      }
+    }
+  });
+
   // Limpar estado quando o serviceId mudar
   useEffect(() => {
     setPixPayment(null);
+    setExistingPIX(null);
+    setShowConfirmOverwrite(false);
     setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -165,6 +196,12 @@ export function PIXPaymentModal({
       return;
     }
 
+    // Verificar se já existe PIX para este serviço
+    if (existingPIX && !showConfirmOverwrite) {
+      setShowConfirmOverwrite(true);
+      return;
+    }
+
     setIsGenerating(true);
     createPIXMutation.mutate({
       serviceId,
@@ -174,6 +211,23 @@ export function PIXPaymentModal({
       customerName: customerName || "Cliente",
       customerDocument: customerDocument || "00000000000",
     });
+  };
+
+  const handleConfirmOverwrite = () => {
+    setShowConfirmOverwrite(false);
+    setExistingPIX(null);
+    handleGeneratePIX();
+  };
+
+  const handleCancelOverwrite = () => {
+    setShowConfirmOverwrite(false);
+  };
+
+  const handleUseExistingPIX = () => {
+    if (existingPIX) {
+      setPixPayment(existingPIX);
+      setShowConfirmOverwrite(false);
+    }
   };
 
   const copyToClipboard = async (text: string) => {
@@ -256,6 +310,63 @@ export function PIXPaymentModal({
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Modal de confirmação para PIX existente */}
+          {showConfirmOverwrite && existingPIX && (
+            <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-700 rounded-xl p-6 space-y-4">
+              <div className="text-center space-y-3">
+                <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
+                    PIX já existe para este serviço
+                  </h3>
+                  <p className="text-orange-600 dark:text-orange-300 text-sm">
+                    Já existe um PIX gerado no valor de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> para este serviço.
+                  </p>
+                  <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
+                    Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
+                  </p>
+                </div>
+              </div>
+
+              <Separator className="bg-orange-200 dark:bg-orange-700" />
+
+              <div className="space-y-3">
+                <p className="text-center text-orange-700 dark:text-orange-300 text-sm font-medium">
+                  O que você deseja fazer?
+                </p>
+                
+                <div className="flex flex-col gap-3">
+                  <Button
+                    onClick={handleUseExistingPIX}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Usar PIX Existente
+                  </Button>
+                  
+                  <Button
+                    onClick={handleConfirmOverwrite}
+                    variant="outline"
+                    className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Gerar Novo PIX (substituir)
+                  </Button>
+                  
+                  <Button
+                    onClick={handleCancelOverwrite}
+                    variant="ghost"
+                    className="w-full text-gray-600 hover:bg-gray-100"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Loading durante geração - mostrado no lugar do formulário */}
           {isGenerating && (
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-xl p-6 space-y-6">
@@ -275,8 +386,8 @@ export function PIXPaymentModal({
             </div>
           )}
 
-          {/* Formulário de geração de novo PIX - só aparece quando não está carregando e não há PIX gerado */}
-          {!pixPayment && !isGenerating && (
+          {/* Formulário de geração de novo PIX - só aparece quando não está carregando, não há PIX gerado e não está mostrando confirmação */}
+          {!pixPayment && !isGenerating && !showConfirmOverwrite && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 space-y-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -374,8 +485,8 @@ export function PIXPaymentModal({
             </div>
           )}
 
-          {/* PIX gerado - só aparece quando não está carregando e há PIX gerado */}
-          {pixPayment && !isGenerating && (
+          {/* PIX gerado - só aparece quando não está carregando, há PIX gerado e não está mostrando confirmação */}
+          {pixPayment && !isGenerating && !showConfirmOverwrite && (
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 rounded-xl p-6 space-y-6">
               {/* Header de sucesso */}
               <div className="text-center space-y-3">
