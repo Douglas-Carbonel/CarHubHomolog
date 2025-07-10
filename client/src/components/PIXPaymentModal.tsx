@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,28 @@ export function PIXPaymentModal({
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Limpar estado quando o serviceId mudar
+  useEffect(() => {
+    setPixPayment(null);
+    setAmount(defaultAmount > 0 ? defaultAmount.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }) : "");
+    setDescription("");
+    setCustomerEmail(customerData?.email || "cliente@exemplo.com");
+    setCustomerName(customerData?.name || "");
+    setCustomerDocument(customerData?.document || "");
+    setIsGenerating(false);
+  }, [serviceId, defaultAmount, customerData]);
+
+  // Limpar estado quando o modal fechar
+  useEffect(() => {
+    if (!open) {
+      setPixPayment(null);
+      setIsGenerating(false);
+    }
+  }, [open]);
 
   // Remover query automática que causava problema - PIX só é buscado quando necessário
 
