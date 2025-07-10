@@ -90,10 +90,10 @@ export function PIXPaymentModal({
       if (!response.ok) throw new Error("Erro ao verificar PIX existente");
       return response.json();
     },
-    enabled: open && serviceId > 0 && !pixPayment, // Só verificar se não há PIX já carregado
+    enabled: open && serviceId > 0,
     onSuccess: (data) => {
-      // Só processar se não estamos gerando PIX e não há PIX já carregado
-      if (isGenerating || pixPayment) {
+      // Não processar se já há PIX gerado (para não interferir)
+      if (pixPayment) {
         return;
       }
       
@@ -120,7 +120,9 @@ export function PIXPaymentModal({
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
       }
-    }
+    },
+    refetchOnWindowFocus: false, // Não recarregar quando janela ganha foco
+    staleTime: 60000, // Considerar dados válidos por 1 minuto
   });
 
   // Limpar estado quando o serviceId mudar
@@ -161,18 +163,20 @@ export function PIXPaymentModal({
     },
     onSuccess: (data) => {
       console.log('PIX created successfully:', data);
-      // Garantir que o loading pare antes de mostrar o QR code
+      // Parar loading primeiro
       setIsGenerating(false);
-      // Definir o PIX payment diretamente e limpar outros estados
-      setPixPayment(data);
-      setExistingPIX(null);
-      setShowConfirmOverwrite(false);
+      
+      // Aguardar um momento e depois definir o PIX
+      setTimeout(() => {
+        setPixPayment(data);
+        setExistingPIX(null);
+        setShowConfirmOverwrite(false);
+      }, 200);
       
       toast({
         title: "PIX gerado com sucesso!",
         description: "O QR Code e chave PIX foram criados.",
       });
-      // NÃO invalidar queries para evitar interferência no estado
     },
     onError: (error) => {
       console.error('PIX creation error:', error);
