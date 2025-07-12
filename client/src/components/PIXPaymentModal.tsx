@@ -97,12 +97,12 @@ export function PIXPaymentModal({
       console.log('PIX Modal - Data received:', data);
       return data;
     },
-    // Só ativar query na primeira vez que o modal abre, nunca depois
+    // Ativar query sempre que modal abrir e não houver PIX gerado
     enabled: open && serviceId > 0 && !pixPayment && !isGenerating,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true, // Permitir refetch ao montar novamente
     refetchInterval: false,
-    staleTime: Infinity, // Nunca considerar dados antigos
+    staleTime: 0, // Sempre buscar dados frescos
   });
 
   // Processar dados quando a query for bem-sucedida (sintaxe v5)
@@ -146,15 +146,20 @@ export function PIXPaymentModal({
     }
   }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating]);
 
-  // Limpar estado APENAS quando serviceId mudar (não customerData)
+  // Limpar estado quando modal abrir para permitir nova verificação
   useEffect(() => {
-    if (serviceId > 0) {
+    if (open && serviceId > 0) {
+      // Limpar apenas estados de UI, não dados da query
       setPixPayment(null);
       setExistingPIX(null);
       setShowConfirmOverwrite(false);
       setIsGenerating(false);
+      
+      // Forçar refetch da query para verificar PIX existente novamente
+      console.log('PIX Modal - Modal aberto, invalidating query cache para nova verificação');
+      queryClient.invalidateQueries([`/api/mercadopago/service/${serviceId}/pix`]);
     }
-  }, [serviceId]);
+  }, [open, serviceId, queryClient]);
 
   // Configurar dados iniciais apenas quando modal abrir pela primeira vez
   useEffect(() => {
