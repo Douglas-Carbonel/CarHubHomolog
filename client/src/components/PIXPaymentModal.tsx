@@ -144,10 +144,12 @@ export function PIXPaymentModal({
           amount: parseFloat(existingPIXRecord.amount)
         });
         setShowConfirmOverwrite(true);
+        console.log('PIX Modal - showConfirmOverwrite set to TRUE');
       } else if (!data || data.length === 0) {
         console.log('PIX Modal - No PIX records found for service:', serviceId);
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
+        console.log('PIX Modal - showConfirmOverwrite set to FALSE (no records)');
       }
     }
     
@@ -156,28 +158,33 @@ export function PIXPaymentModal({
     }
   }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating, showConfirmOverwrite, open]);
 
-  // Limpar estado quando modal abrir para permitir nova verificação
+  // Limpar estado apenas quando modal fechar ou serviceId mudar
   useEffect(() => {
-    if (open && serviceId > 0) {
-      console.log('PIX Modal - Modal opened, resetting states');
-      // Limpar apenas estados de UI, não dados da query
-      setPixPayment(null);
-      setExistingPIX(null);
-      setShowConfirmOverwrite(false);
-      setIsGenerating(false);
-      
-      // Forçar refetch da query para verificar PIX existente novamente
-      console.log('PIX Modal - Modal aberto, invalidating query cache para nova verificação');
-      queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
-    }
-    
     // Quando modal fechar, limpar tudo
     if (!open) {
       console.log('PIX Modal - Modal closed, cleaning all states');
       setPixPayment(null);
       setExistingPIX(null);
       setShowConfirmOverwrite(false);
+      console.log('PIX Modal - showConfirmOverwrite set to FALSE (modal closing)');
       setIsGenerating(false);
+    }
+  }, [open]);
+
+  // Quando serviceId mudar, limpar apenas se necessário
+  useEffect(() => {
+    if (serviceId > 0) {
+      console.log('PIX Modal - ServiceId changed, resetting only if needed');
+      setPixPayment(null);
+      setIsGenerating(false);
+    }
+  }, [serviceId]);
+
+  // Invalidar cache quando modal abrir
+  useEffect(() => {
+    if (open && serviceId > 0) {
+      console.log('PIX Modal - Modal opened, invalidating cache to fetch fresh data');
+      queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
     }
   }, [open, serviceId, queryClient]);
 
