@@ -99,8 +99,17 @@ export function PIXPaymentModal({
     },
     // Só ativar query na primeira vez que o modal abre, nunca depois
     enabled: open && serviceId > 0 && !pixPayment && !isGenerating,
-    onSuccess: (data) => {
-      console.log('PIX Modal - onSuccess triggered with data:', data);
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: Infinity, // Nunca considerar dados antigos
+  });
+
+  // Processar dados quando a query for bem-sucedida (sintaxe v5)
+  useEffect(() => {
+    if (checkExistingPIX.data && checkExistingPIX.isSuccess) {
+      const data = checkExistingPIX.data;
+      console.log('PIX Modal - Processing query success with data:', data);
       
       // NUNCA processar se há PIX gerado ou se está gerando
       if (pixPayment || isGenerating) {
@@ -130,15 +139,12 @@ export function PIXPaymentModal({
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
       }
-    },
-    onError: (error) => {
-      console.error('PIX Modal - Error checking existing PIX:', error);
-    },
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    staleTime: Infinity, // Nunca considerar dados antigos
-  });
+    }
+    
+    if (checkExistingPIX.isError) {
+      console.error('PIX Modal - Error checking existing PIX:', checkExistingPIX.error);
+    }
+  }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating]);
 
   // Limpar estado APENAS quando serviceId mudar (não customerData)
   useEffect(() => {
