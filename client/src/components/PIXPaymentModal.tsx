@@ -78,6 +78,7 @@ export function PIXPaymentModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [existingPIX, setExistingPIX] = useState<PIXPayment | null>(null);
   const [showConfirmOverwrite, setShowConfirmOverwrite] = useState(false);
+  const [userConfirmedOverwrite, setUserConfirmedOverwrite] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -114,6 +115,7 @@ export function PIXPaymentModal({
       isGenerating,
       showConfirmOverwrite,
       existingPIX: !!existingPIX,
+      userConfirmedOverwrite,
       open
     });
     
@@ -121,9 +123,9 @@ export function PIXPaymentModal({
       const data = checkExistingPIX.data;
       console.log('PIX Modal - Processing query success with data:', data);
       
-      // NUNCA processar se há PIX gerado, está gerando, ou já há PIX existente detectado
-      if (pixPayment || isGenerating || existingPIX) {
-        console.log('PIX Modal - Ignorando query result - PIX já existe, gerando, ou existingPIX já definido');
+      // NUNCA processar se há PIX gerado, está gerando, já há PIX existente detectado, ou usuário confirmou sobrescrever
+      if (pixPayment || isGenerating || existingPIX || userConfirmedOverwrite) {
+        console.log('PIX Modal - Ignorando query result - PIX já existe, gerando, existingPIX definido, ou usuário confirmou sobrescrever');
         return;
       }
       
@@ -160,7 +162,7 @@ export function PIXPaymentModal({
     if (checkExistingPIX.isError) {
       console.error('PIX Modal - Error checking existing PIX:', checkExistingPIX.error);
     }
-  }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating, showConfirmOverwrite, existingPIX, open]);
+  }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating, showConfirmOverwrite, existingPIX, userConfirmedOverwrite, open]);
 
   // Limpar estado apenas quando modal fechar ou serviceId mudar
   useEffect(() => {
@@ -170,6 +172,7 @@ export function PIXPaymentModal({
       setPixPayment(null);
       setExistingPIX(null);
       setShowConfirmOverwrite(false);
+      setUserConfirmedOverwrite(false);
       console.log('PIX Modal - showConfirmOverwrite set to FALSE (modal closing)');
       setIsGenerating(false);
     }
@@ -181,6 +184,7 @@ export function PIXPaymentModal({
       console.log('PIX Modal - ServiceId changed, resetting only if needed');
       setPixPayment(null);
       setIsGenerating(false);
+      setUserConfirmedOverwrite(false);
     }
   }, [serviceId]);
 
@@ -294,11 +298,12 @@ export function PIXPaymentModal({
 
   const handleConfirmOverwrite = () => {
     // Fechar modal de confirmação e limpar completamente o estado
-    console.log('PIX Modal - User confirmed overwrite, clearing all states');
+    console.log('PIX Modal - User confirmed overwrite, clearing all states and setting confirmed flag');
     setShowConfirmOverwrite(false);
     setExistingPIX(null);
     setPixPayment(null);
     setIsGenerating(false);
+    setUserConfirmedOverwrite(true); // Marcar que usuário confirmou para evitar re-detecção
     
     // Limpar também o cache para evitar re-detecção
     queryClient.removeQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
