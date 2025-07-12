@@ -100,26 +100,21 @@ export function PIXPaymentModal({
       }
       
       if (data && data.length > 0) {
-        // Buscar PIX pendentes (ativos)
-        const activePIX = data.find((pix: any) => pix.status === 'pending');
+        // Com a nova lógica, há apenas 1 registro por serviço
+        const existingPIXRecord = data[0];
         
-        if (activePIX) {
-          console.log('Found active PIX for service:', serviceId, 'status:', activePIX.status);
-          setExistingPIX({
-            id: activePIX.mercado_pago_id,
-            status: activePIX.status,
-            qrCode: activePIX.qr_code_text,
-            qrCodeBase64: activePIX.qr_code_base64,
-            pixCopyPaste: activePIX.qr_code_text,
-            expirationDate: activePIX.expires_at,
-            amount: parseFloat(activePIX.amount)
-          });
-          setShowConfirmOverwrite(true);
-        } else {
-          console.log('No active PIX found for service:', serviceId, '- total PIX records:', data.length);
-          setExistingPIX(null);
-          setShowConfirmOverwrite(false);
-        }
+        // Sempre mostrar confirmação quando há PIX existente (qualquer status)
+        console.log('Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
+        setExistingPIX({
+          id: existingPIXRecord.mercado_pago_id,
+          status: existingPIXRecord.status,
+          qrCode: existingPIXRecord.qr_code_text,
+          qrCodeBase64: existingPIXRecord.qr_code_base64,
+          pixCopyPaste: existingPIXRecord.qr_code_text,
+          expirationDate: existingPIXRecord.expires_at,
+          amount: parseFloat(existingPIXRecord.amount)
+        });
+        setShowConfirmOverwrite(true);
       } else {
         console.log('No PIX records found for service:', serviceId);
         setExistingPIX(null);
@@ -360,7 +355,7 @@ export function PIXPaymentModal({
                   
                   <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
                     <p className="text-xs text-orange-600 dark:text-orange-400">
-                      💡 <strong>Dica:</strong> Você pode usar o PIX existente ou gerar um novo. O anterior permanecerá salvo no histórico.
+                      💡 <strong>Dica:</strong> Você pode usar o QR Code existente ou gerar um novo (o registro será atualizado).
                     </p>
                   </div>
                 </div>

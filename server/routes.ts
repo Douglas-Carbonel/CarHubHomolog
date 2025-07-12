@@ -1816,8 +1816,10 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         return res.status(404).json({ message: "Serviço não encontrado" });
       }
 
-      // NÃO deletar PIX existentes - manter histórico completo
-      console.log('Creating new PIX payment for service:', serviceId, '(keeping existing PIX history)');
+      // Verificar se já existe PIX para este serviço
+      const existingPix = await db.execute(sql`
+        SELECT id, mercado_pago_id, amount, status FROM pix_payments WHERE service_id = ${serviceId}
+      `);
 
       const paymentData = {
         amount: parseFloat(amount),
@@ -1828,7 +1830,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         externalReference: `SERVICE_${serviceId}_${Date.now()}`
       };
 
-      console.log('Creating new PIX payment for service:', serviceId, 'with data:', {
+      console.log('Creating PIX payment for service:', serviceId, 'with data:', {
         amount: paymentData.amount,
         description: paymentData.description,
         customerEmail: paymentData.customerEmail
@@ -1846,38 +1848,47 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         qrCodeStartsWithData: pixPayment.qrCodeBase64?.startsWith('data:image/') || false
       });
 
-      // Verificar se já existe PIX com mesmo MercadoPago ID (improvável mas possível)
-      const existingPixWithSameId = await db.execute(sql`
-        SELECT id FROM pix_payments WHERE mercado_pago_id = ${pixPayment.id}
-      `);
-      
-      if (existingPixWithSameId.length > 0) {
-        console.log('Found existing PIX with same MercadoPago ID - this is unusual but will keep both records');
-      }
-
-      // Salvar dados do PIX no banco com logs detalhados
-      console.log('Saving PIX to database with QR code data:', {
+      // Salvar ou atualizar PIX no banco - apenas 1 registro por serviço
+      console.log('Saving PIX to database:', {
         serviceId,
         mercadoPagoId: pixPayment.id,
         amount,
         status: pixPayment.status,
+        existingRecords: existingPix.length,
         qrCodeLength: pixPayment.qrCode?.length || 0,
-        qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0,
-        hasQrCodeBase64: !!pixPayment.qrCodeBase64,
-        qrCodeBase64Preview: pixPayment.qrCodeBase64?.substring(0, 50) || 'EMPTY'
+        qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0
       });
       
-      await db.execute(sql`
-        INSERT INTO pix_payments (
-          service_id, mercado_pago_id, amount, status, 
-          qr_code_text, qr_code_base64, expires_at, external_reference, created_at
-        ) VALUES (
-          ${serviceId}, ${pixPayment.id}, ${amount}, ${pixPayment.status},
-          ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}, NOW()
-        )
-      `);
-      
-      console.log('PIX saved to database successfully');
+      if (existingPix.length > 0) {
+        // UPDATE do registro existente
+        console.log('Updating existing PIX record for service:', serviceId);
+        await db.execute(sql`
+          UPDATE pix_payments SET
+            mercado_pago_id = ${pixPayment.id},
+            amount = ${amount},
+            status = ${pixPayment.status},
+            qr_code_text = ${pixPayment.qrCode},
+            qr_code_base64 = ${pixPayment.qrCodeBase64},
+            expires_at = ${pixPayment.expirationDate},
+            external_reference = ${paymentData.externalReference},
+            created_at = NOW()
+          WHERE service_id = ${serviceId}
+        `);
+        console.log('PIX record updated successfully');
+      } else {
+        // INSERT de novo registro
+        console.log('Inserting new PIX record for service:', serviceId);
+        await db.execute(sql`
+          INSERT INTO pix_payments (
+            service_id, mercado_pago_id, amount, status, 
+            qr_code_text, qr_code_base64, expires_at, external_reference, created_at
+          ) VALUES (
+            ${serviceId}, ${pixPayment.id}, ${amount}, ${pixPayment.status},
+            ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}, NOW()
+          )
+        `);
+        console.log('PIX record inserted successfully');
+      }
 
       res.json(pixPayment);
     } catch (error) {
