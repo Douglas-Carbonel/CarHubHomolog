@@ -107,7 +107,16 @@ export function PIXPaymentModal({
 
   // Processar dados quando a query for bem-sucedida (sintaxe v5)
   useEffect(() => {
-    if (checkExistingPIX.data && checkExistingPIX.isSuccess) {
+    console.log('PIX Modal - useEffect triggered, conditions:', {
+      hasData: !!checkExistingPIX.data,
+      isSuccess: checkExistingPIX.isSuccess,
+      pixPayment: !!pixPayment,
+      isGenerating,
+      showConfirmOverwrite,
+      open
+    });
+    
+    if (checkExistingPIX.data && checkExistingPIX.isSuccess && open) {
       const data = checkExistingPIX.data;
       console.log('PIX Modal - Processing query success with data:', data);
       
@@ -117,7 +126,8 @@ export function PIXPaymentModal({
         return;
       }
       
-      if (data && data.length > 0) {
+      // Só processar se modal está aberto e não há confirmação já exibida
+      if (data && data.length > 0 && !showConfirmOverwrite) {
         // Com a nova lógica, há apenas 1 registro por serviço
         const existingPIXRecord = data[0];
         
@@ -134,7 +144,7 @@ export function PIXPaymentModal({
           amount: parseFloat(existingPIXRecord.amount)
         });
         setShowConfirmOverwrite(true);
-      } else {
+      } else if (!data || data.length === 0) {
         console.log('PIX Modal - No PIX records found for service:', serviceId);
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
@@ -144,11 +154,12 @@ export function PIXPaymentModal({
     if (checkExistingPIX.isError) {
       console.error('PIX Modal - Error checking existing PIX:', checkExistingPIX.error);
     }
-  }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating]);
+  }, [checkExistingPIX.data, checkExistingPIX.isSuccess, checkExistingPIX.isError, serviceId, pixPayment, isGenerating, showConfirmOverwrite, open]);
 
   // Limpar estado quando modal abrir para permitir nova verificação
   useEffect(() => {
     if (open && serviceId > 0) {
+      console.log('PIX Modal - Modal opened, resetting states');
       // Limpar apenas estados de UI, não dados da query
       setPixPayment(null);
       setExistingPIX(null);
@@ -157,7 +168,16 @@ export function PIXPaymentModal({
       
       // Forçar refetch da query para verificar PIX existente novamente
       console.log('PIX Modal - Modal aberto, invalidating query cache para nova verificação');
-      queryClient.invalidateQueries([`/api/mercadopago/service/${serviceId}/pix`]);
+      queryClient.invalidateQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
+    }
+    
+    // Quando modal fechar, limpar tudo
+    if (!open) {
+      console.log('PIX Modal - Modal closed, cleaning all states');
+      setPixPayment(null);
+      setExistingPIX(null);
+      setShowConfirmOverwrite(false);
+      setIsGenerating(false);
     }
   }, [open, serviceId, queryClient]);
 
