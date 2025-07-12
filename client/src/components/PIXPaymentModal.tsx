@@ -86,16 +86,25 @@ export function PIXPaymentModal({
   const checkExistingPIX = useQuery({
     queryKey: [`/api/mercadopago/service/${serviceId}/pix`],
     queryFn: async () => {
+      console.log('PIX Modal - Fazendo query para verificar PIX existente, serviceId:', serviceId);
       const response = await fetch(`/api/mercadopago/service/${serviceId}/pix`);
-      if (!response.ok) throw new Error("Erro ao verificar PIX existente");
-      return response.json();
+      console.log('PIX Modal - Response status:', response.status);
+      if (!response.ok) {
+        console.error('PIX Modal - Erro na query:', response.status, response.statusText);
+        throw new Error("Erro ao verificar PIX existente");
+      }
+      const data = await response.json();
+      console.log('PIX Modal - Data received:', data);
+      return data;
     },
     // Só ativar query na primeira vez que o modal abre, nunca depois
     enabled: open && serviceId > 0 && !pixPayment && !isGenerating,
     onSuccess: (data) => {
+      console.log('PIX Modal - onSuccess triggered with data:', data);
+      
       // NUNCA processar se há PIX gerado ou se está gerando
       if (pixPayment || isGenerating) {
-        console.log('Ignorando query result - PIX já existe ou gerando');
+        console.log('PIX Modal - Ignorando query result - PIX já existe ou gerando');
         return;
       }
       
@@ -104,7 +113,8 @@ export function PIXPaymentModal({
         const existingPIXRecord = data[0];
         
         // Sempre mostrar confirmação quando há PIX existente (qualquer status)
-        console.log('Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
+        console.log('PIX Modal - Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
+        console.log('PIX Modal - Setting existing PIX and showing confirm overwrite');
         setExistingPIX({
           id: existingPIXRecord.mercado_pago_id,
           status: existingPIXRecord.status,
@@ -116,10 +126,13 @@ export function PIXPaymentModal({
         });
         setShowConfirmOverwrite(true);
       } else {
-        console.log('No PIX records found for service:', serviceId);
+        console.log('PIX Modal - No PIX records found for service:', serviceId);
         setExistingPIX(null);
         setShowConfirmOverwrite(false);
       }
+    },
+    onError: (error) => {
+      console.error('PIX Modal - Error checking existing PIX:', error);
     },
     refetchOnWindowFocus: false,
     refetchOnMount: false,
