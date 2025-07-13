@@ -376,32 +376,32 @@ export function PIXPaymentModal({
 
 ${pixPayment.pixCopyPaste}`;
 
-    // Função para enviar mensagens sequencialmente
-    const sendMessages = async () => {
-      // Enviar primeira mensagem
-      const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
-      window.open(whatsappUrl1, '_blank');
+    // Abrir ambas as janelas imediatamente para evitar bloqueio de pop-up
+    const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
+    const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
+    
+    // Abrir primeira janela
+    const window1 = window.open(whatsappUrl1, '_blank');
+    
+    // Abrir segunda janela imediatamente
+    const window2 = window.open(whatsappUrl2, '_blank');
 
-      // Toast para informar o usuário
+    // Toast informativo
+    toast({
+      title: "Mensagens enviadas!",
+      description: "Duas abas do WhatsApp foram abertas: 1ª com informações e 2ª com chave PIX",
+      duration: 5000,
+    });
+
+    // Verificar se as janelas foram abertas com sucesso
+    if (!window1 || !window2) {
       toast({
-        title: "1ª mensagem enviada!",
-        description: "A 2ª mensagem com a chave PIX será enviada em 3 segundos...",
-        duration: 3000,
+        title: "Atenção",
+        description: "Permita pop-ups no navegador para enviar as duas mensagens automaticamente",
+        variant: "destructive",
+        duration: 7000,
       });
-
-      // Aguardar 3 segundos e enviar segunda mensagem
-      setTimeout(() => {
-        const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
-        window.open(whatsappUrl2, '_blank');
-        
-        toast({
-          title: "2ª mensagem enviada!",
-          description: "Chave PIX compartilhada com sucesso!",
-        });
-      }, 3000);
-    };
-
-    sendMessages();
+    }
   };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
