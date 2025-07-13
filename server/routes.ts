@@ -1923,6 +1923,41 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         WHERE mercado_pago_id = ${paymentId}
       `);
 
+      // Se foi aprovado, atualizar o serviço também
+      if (paymentStatus.status === 'approved') {
+        const pixPayment = await db.execute(sql`
+          SELECT service_id, amount FROM pix_payments 
+          WHERE mercado_pago_id = ${paymentId}
+        `);
+
+        if (pixPayment.rows.length > 0) {
+          const serviceId = pixPayment.rows[0].service_id;
+          const amount = parseFloat(pixPayment.rows[0].amount);
+
+          // Verificar se já foi contabilizado
+          const service = await db.execute(sql`
+            SELECT pix_pago FROM services WHERE id = ${serviceId}
+          `);
+
+          if (service.rows.length > 0) {
+            const currentPixPago = parseFloat(service.rows[0].pix_pago || '0');
+            
+            // Só atualizar se este valor específico ainda não foi contabilizado
+            if (currentPixPago < amount || currentPixPago === 0) {
+              await db.execute(sql`
+                UPDATE services 
+                SET pix_pago = ${amount},
+                    valor_pago = (COALESCE(dinheiro_pago, 0) + COALESCE(cartao_pago, 0) + COALESCE(cheque_pago, 0) + ${amount}),
+                    updated_at = NOW()
+                WHERE id = ${serviceId}
+              `);
+
+              console.log(`Service ${serviceId} updated with PIX payment of R$ ${amount}`);
+            }
+          }
+        }
+      }
+
       res.json(paymentStatus);
     } catch (error) {
       console.error("Error getting payment status:", error);
@@ -1994,6 +2029,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
                     updated_at = NOW()
                 WHERE id = ${serviceId}
               `);
+
+              console.log(`Service ${serviceId} updated with PIX payment of R$ ${amount}`);
             }
           }
 

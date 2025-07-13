@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { QrCode, Copy, Clock, CheckCircle, XCircle, CreditCard, Smartphone, AlertCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, Copy, Clock, Smartphone, AlertCircle, QrCode, RefreshCw } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -380,6 +380,48 @@ export function PIXPaymentModal({
     }
   };
 
+  const checkStatusMutation = useMutation({
+    mutationFn: async (paymentId: string) => {
+      const response = await fetch(`/api/mercadopago/check-pix-status?paymentId=${paymentId}`);
+      if (!response.ok) {
+        throw new Error('Erro ao verificar o status do pagamento');
+      }
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      // Atualizar o estado do pagamento com o novo status
+      setPixPayment((prev) => {
+        if (prev) {
+          return { ...prev, status: data.status };
+        }
+        return prev;
+      });
+      toast({
+        title: "Status do PIX atualizado!",
+        description: `O status do pagamento é: ${getStatusText(data.status)}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao verificar status do PIX",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCheckPaymentStatus = () => {
+    if (pixPayment && pixPayment.id) {
+      checkStatusMutation.mutate(pixPayment.id);
+    } else {
+      toast({
+        title: "Erro",
+        description: "ID do pagamento não encontrado.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
@@ -725,19 +767,36 @@ export function PIXPaymentModal({
 
               <Separator className="bg-green-200 dark:bg-green-700" />
 
-              {/* Ações */}
+              {/* Botões de ação */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={() => {
-                    console.log('Clearing PIX payment to generate new one');
-                    setPixPayment(null);
-                    setIsGenerating(false);
-                  }}
+                  onClick={() => navigator.clipboard.writeText(pixPayment.pixCopyPaste)}
                   variant="outline"
-                  className="flex-1 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  className="flex-1 h-12 border-2 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                 >
-                  Gerar Novo PIX
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copiar Código PIX
                 </Button>
+
+                <Button
+                  onClick={handleCheckPaymentStatus}
+                  variant="outline"
+                  disabled={checkStatusMutation.isPending}
+                  className="flex-1 h-12 border-2 border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                >
+                  {checkStatusMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Verificando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Verificar Status
+                    </>
+                  )}
+                </Button>
+
                 <Button
                   onClick={() => {
                     console.log('Closing PIX modal');
