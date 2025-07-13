@@ -82,6 +82,20 @@ export class MercadoPagoService {
       console.log('MercadoPago response - date_of_expiration:', response.date_of_expiration);
       console.log('Original amount sent:', paymentData.amount);
       console.log('Will return amount:', paymentData.amount, 'instead of MercadoPago amount:', response.transaction_amount);
+      
+      // Detectar se a data de expiração retornada é passada (bug do sandbox)
+      const returnedExpiration = new Date(response.date_of_expiration);
+      const now = new Date();
+      const isExpired = returnedExpiration < now;
+      
+      console.log('Expiration date check:');
+      console.log('- Returned expiration:', returnedExpiration.toISOString());
+      console.log('- Current time:', now.toISOString());
+      console.log('- Is expired:', isExpired);
+      
+      // Se expirou, usar nossa data de expiração original
+      const finalExpirationDate = isExpired ? expirationDate.toISOString() : response.date_of_expiration;
+      console.log('Final expiration date to use:', finalExpirationDate);
 
       if (!response.point_of_interaction?.transaction_data) {
         throw new Error('Failed to generate PIX payment');
@@ -153,16 +167,13 @@ export class MercadoPagoService {
         qrCodeBase64 = '';
       }
 
-      // Usar a data de expiração já calculada
-      const expirationISO = expirationDate.toISOString();
-
       return {
         id: response.id?.toString() || '',
         status: response.status || '',
         qrCode: qrCodeText,
         qrCodeBase64: qrCodeBase64,
         pixCopyPaste: qrCodeText,
-        expirationDate: expirationISO,
+        expirationDate: finalExpirationDate,
         amount: paymentData.amount // Usar o valor original enviado, não o retornado pelo MercadoPago
       };
     } catch (error) {
