@@ -353,7 +353,36 @@ export function PIXPaymentModal({
     }
   };
 
+  const shareViaWhatsApp = (pixPayment: PIXPayment) => {
+    const message = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
 
+💰 *Valor:* R$ ${pixPayment.amount.toFixed(2)}
+📅 *Válido até:* ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
+    })}
+
+✅ *Como pagar:*
+1. Abra seu app do banco
+2. Escolha PIX > Pagar
+3. Use o botão "Copiar Chave PIX" no app para copiar automaticamente
+4. Cole no seu app bancário e confirme
+
+💡 *Dica:* Após enviar esta mensagem, use o botão "Copiar Chave PIX" para facilitar o pagamento!`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast({
+      title: "Mensagem enviada!",
+      description: "Informações do PIX enviadas. Use o botão 'Copiar Chave PIX' para facilitar o pagamento.",
+      duration: 5000,
+    });
+  };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
     const message = `🎯 Pagamento PIX - Ordem de Serviço #${serviceId}
@@ -964,16 +993,24 @@ export function PIXPaymentModal({
                   </Button>
                 </div>
 
-                {/* Segunda linha - Ações principais */}
-                <div className="flex flex-col sm:flex-row gap-3">
+                {/* Segunda linha - Botão especial para copiar chave PIX */}
+                <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-lg border-2 border-emerald-400">
+                  <div className="text-center mb-3">
+                    <p className="text-white text-sm font-medium">
+                      💡 Para usuários do celular: clique aqui para copiar a chave PIX facilmente!
+                    </p>
+                  </div>
                   <Button
                     onClick={() => copyToClipboard(pixPayment.pixCopyPaste)}
-                    variant="outline"
-                    className="flex-1 h-12 border-2 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
+                    className="w-full h-14 bg-white hover:bg-gray-100 text-emerald-700 border-2 border-emerald-300 text-lg font-bold shadow-lg"
                   >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar Código PIX
+                    <Copy className="h-5 w-5 mr-3" />
+                    Copiar Chave PIX
                   </Button>
+                </div>
+
+                {/* Terceira linha - Outras ações */}
+                <div className="flex flex-col sm:flex-row gap-3">
 
                   <Button
                     onClick={handleCheckPaymentStatus}
