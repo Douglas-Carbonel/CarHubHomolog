@@ -389,6 +389,8 @@ export function PIXPaymentModal({
       return await response.json();
     },
     onSuccess: (data) => {
+      console.log('PIX status check result:', data);
+      
       // Atualizar o estado do pagamento com o novo status
       setPixPayment((prev) => {
         if (prev) {
@@ -396,12 +398,17 @@ export function PIXPaymentModal({
         }
         return prev;
       });
-      toast({
-        title: "Status do PIX atualizado!",
-        description: `O status do pagamento é: ${getStatusText(data.status)}`,
-      });
+
+      // Só mostrar toast manual se não for polling automático
+      if (data.status !== 'pending') {
+        toast({
+          title: "Status do PIX atualizado!",
+          description: `O status do pagamento é: ${getStatusText(data.status)}`,
+        });
+      }
     },
     onError: (error: any) => {
+      console.error('PIX status check error:', error);
       toast({
         title: "Erro ao verificar status do PIX",
         description: error.message,
@@ -421,6 +428,50 @@ export function PIXPaymentModal({
       });
     }
   };
+
+  // Polling automático para verificar status do pagamento PIX
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    // Só ativar polling se há PIX gerado, está com status pending e modal está aberto
+    if (pixPayment && pixPayment.status === 'pending' && open && !checkStatusMutation.isPending) {
+      console.log(`Starting automatic PIX polling for payment ${pixPayment.id}`);
+      
+      interval = setInterval(() => {
+        console.log(`Automatic PIX check for payment ${pixPayment.id}`);
+        checkStatusMutation.mutate(pixPayment.id);
+      }, 10000); // Verificar a cada 10 segundos
+    }
+
+    return () => {
+      if (interval) {
+        console.log('Clearing PIX polling interval');
+        clearInterval(interval);
+      }
+    };
+  }, [pixPayment?.id, pixPayment?.status, open, checkStatusMutation.isPending]);
+
+  // Atualizar lista de serviços e fechar modal quando pagamento for aprovado
+  useEffect(() => {
+    if (pixPayment?.status === 'approved') {
+      console.log('PIX payment approved! Updating services list and closing modal...');
+      
+      // Invalidar cache dos serviços para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      
+      // Mostrar toast de sucesso
+      toast({
+        title: "🎉 Pagamento PIX Aprovado!",
+        description: `Pagamento de R$ ${pixPayment.amount.toFixed(2)} foi processado com sucesso.`,
+        duration: 5000,
+      });
+
+      // Fechar modal após 2 segundos
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 2000);
+    }
+  }, [pixPayment?.status, queryClient, toast, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -756,9 +807,17 @@ export function PIXPaymentModal({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600 dark:text-gray-400">Status:</span>
-                        <Badge variant={pixPayment.status === "pending" ? "secondary" : "default"} className="text-xs">
-                          {getStatusText(pixPayment.status)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={pixPayment.status === "pending" ? "secondary" : "default"} className="text-xs">
+                            {getStatusText(pixPayment.status)}
+                          </Badge>
+                          {pixPayment.status === "pending" && (
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                              <span className="text-xs text-blue-600 dark:text-blue-400">Verificando automaticamente...</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
