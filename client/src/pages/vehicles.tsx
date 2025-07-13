@@ -311,6 +311,7 @@ export default function VehiclesPage() {
     const customerId = urlParams.get('customerId');
     const openModal = urlParams.get('openModal');
     const action = urlParams.get('action');
+    const plate = urlParams.get('plate');
 
     if (customerId) {
       setCustomerFilter(parseInt(customerId));
@@ -321,7 +322,7 @@ export default function VehiclesPage() {
           setEditingVehicle(null);
           form.reset({
             customerId: parseInt(customerId),
-            licensePlate: "",
+            licensePlate: plate || "",
             brand: "",
             model: "",
             year: new Date().getFullYear(),
@@ -353,7 +354,65 @@ export default function VehiclesPage() {
       // Clean URL after opening modal
       window.history.replaceState({}, '', '/vehicles');
     }
+
+    // Auto-open modal if plate parameter is present (from OCR reader)
+    if (plate && !isModalOpen) {
+      console.log('Opening modal with plate from URL:', plate);
+      setEditingVehicle(null);
+      const defaultValues = {
+        customerId: customerId ? parseInt(customerId) : 0,
+        licensePlate: plate,
+        brand: "",
+        model: "",
+        year: new Date().getFullYear(),
+        color: "",
+        chassis: "",
+        engine: "",
+        fuelType: "gasoline",
+        notes: "",
+      };
+      form.reset(defaultValues);
+      setFormInitialValues(defaultValues);
+      setTemporaryPhotos([]);
+      setCurrentVehiclePhotos([]);
+      setIsModalOpen(true);
+    }
   }, [customers, form, isModalOpen]);
+
+  // Add event listener for custom openVehicleModal event
+  useEffect(() => {
+    const handleOpenVehicleModal = (event: CustomEvent) => {
+      console.log('Custom event received:', event.detail);
+      const { plate } = event.detail;
+      
+      if (plate) {
+        setEditingVehicle(null);
+        const defaultValues = {
+          customerId: 0,
+          licensePlate: plate,
+          brand: "",
+          model: "",
+          year: new Date().getFullYear(),
+          color: "",
+          chassis: "",
+          engine: "",
+          fuelType: "gasoline",
+          notes: "",
+        };
+        form.reset(defaultValues);
+        setFormInitialValues(defaultValues);
+        setTemporaryPhotos([]);
+        setCurrentVehiclePhotos([]);
+        setIsModalOpen(true);
+      }
+    };
+
+    window.addEventListener('openVehicleModal', handleOpenVehicleModal as EventListener);
+    
+    return () => {
+      window.removeEventListener('openVehicleModal', handleOpenVehicleModal as EventListener);
+    };
+  }, [form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: VehicleFormData) => {
