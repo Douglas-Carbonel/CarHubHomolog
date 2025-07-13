@@ -49,11 +49,20 @@ export class MercadoPagoService {
     }
 
     try {
-      // Payload com informações mínimas do pagador
+      // Calcular data de expiração (30 minutos) em formato ISO
+      const expirationDate = new Date(Date.now() + 30 * 60 * 1000);
+      
+      console.log('PIX Expiration setup:');
+      console.log('Current time:', new Date().toISOString());
+      console.log('Expiration time:', expirationDate.toISOString());
+      console.log('Minutes from now:', Math.round((expirationDate.getTime() - Date.now()) / (1000 * 60)));
+      
+      // Payload com informações mínimas do pagador e data de expiração
       const paymentRequest = {
         transaction_amount: paymentData.amount,
         description: paymentData.description,
         payment_method_id: 'pix',
+        date_of_expiration: expirationDate.toISOString(),
         payer: {
           email: this.validateEmail(paymentData.customerEmail) || 'cliente@exemplo.com',
           first_name: paymentData.customerName || 'Cliente',
@@ -143,9 +152,7 @@ export class MercadoPagoService {
         qrCodeBase64 = '';
       }
 
-      // Calcular data de expiração padrão (30 minutos) em formato ISO
-      const now = new Date();
-      const expirationDate = new Date(now.getTime() + 30 * 60 * 1000);
+      // Usar a data de expiração já calculada
       const expirationISO = expirationDate.toISOString();
 
       return {
