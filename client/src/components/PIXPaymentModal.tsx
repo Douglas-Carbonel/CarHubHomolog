@@ -422,7 +422,6 @@ export function PIXPaymentModal({
                   <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
                     <p className="text-orange-700 dark:text-orange-300 text-xs">
                       <strong>Expira em:</strong> {new Date(existingPIX.expirationDate).toLocaleString('pt-BR', {
-                        timeZone: 'America/Sao_Paulo',
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -704,7 +703,6 @@ export function PIXPaymentModal({
                         <span className="text-gray-600 dark:text-gray-400">Expira em:</span>
                         <span className="text-gray-900 dark:text-gray-100">
                           {new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
-                            timeZone: 'America/Sao_Paulo',
                             day: '2-digit',
                             month: '2-digit',
                             hour: '2-digit',
