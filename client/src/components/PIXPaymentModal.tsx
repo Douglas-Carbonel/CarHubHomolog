@@ -354,10 +354,10 @@ export function PIXPaymentModal({
   };
 
   const shareViaWhatsApp = (pixPayment: PIXPayment) => {
-    const message = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
+    const message1 = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
 
 💰 *Valor:* R$ ${pixPayment.amount.toFixed(2)}
-📅 *Vencimento:* ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
+📅 *Válido até:* ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -366,26 +366,32 @@ export function PIXPaymentModal({
       timeZone: 'America/Sao_Paulo'
     })}
 
-📱 *Chave PIX (Copia e Cola):*
-${pixPayment.pixCopyPaste}
-
 ✅ *Como pagar:*
 1. Abra seu app do banco
 2. Escolha PIX > Pagar
-3. Cole a chave acima
-4. Confirme o pagamento
+3. Cole a chave PIX da próxima mensagem
+4. Confirme o pagamento`;
 
-🔄 *Status:* ${getStatusText(pixPayment.status)}`;
+    const message2 = `📱 *Chave PIX (Copia e Cola):*
 
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+${pixPayment.pixCopyPaste}`;
+
+    // Enviar primeira mensagem
+    const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
+    window.open(whatsappUrl1, '_blank');
+
+    // Após um pequeno delay, enviar segunda mensagem
+    setTimeout(() => {
+      const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
+      window.open(whatsappUrl2, '_blank');
+    }, 1000);
   };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
     const message = `🎯 Pagamento PIX - Ordem de Serviço #${serviceId}
 
 💰 Valor: R$ ${pixPayment.amount.toFixed(2)}
-📅 Vencimento: ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
+📅 Válido até: ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -394,9 +400,13 @@ ${pixPayment.pixCopyPaste}
       timeZone: 'America/Sao_Paulo'
     })}
 
-📱 Chave PIX: ${pixPayment.pixCopyPaste}
+✅ Como pagar:
+1. Abra seu app do banco
+2. Escolha PIX > Pagar
+3. Cole a chave PIX abaixo
+4. Confirme o pagamento
 
-Status: ${getStatusText(pixPayment.status)}`;
+📱 Chave PIX: ${pixPayment.pixCopyPaste}`;
 
     if (navigator.share) {
       try {
