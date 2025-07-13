@@ -77,7 +77,7 @@ export class MercadoPagoService {
           first_name: paymentData.customerName || 'Cliente',
           identification: {
             type: 'CPF',
-            number: paymentData.customerDocument || '11111111111'
+            number: this.validateDocument(paymentData.customerDocument) || '11144477735'
           }
         },
         external_reference: paymentData.externalReference
@@ -233,6 +233,31 @@ export class MercadoPagoService {
     if (!email) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email) ? email : null;
+  }
+
+  private validateDocument(document?: string): string | null {
+    if (!document) return null;
+    
+    // Remove caracteres não numéricos
+    const cleanDocument = document.replace(/\D/g, '');
+    
+    // Verificar se é um CPF válido (11 dígitos)
+    if (cleanDocument.length === 11) {
+      // Verificar se não são todos os números iguais
+      if (!/^(\d)\1{10}$/.test(cleanDocument)) {
+        return cleanDocument;
+      }
+    }
+    
+    // Verificar se é um CNPJ válido (14 dígitos)
+    if (cleanDocument.length === 14) {
+      // Verificar se não são todos os números iguais
+      if (!/^(\d)\1{13}$/.test(cleanDocument)) {
+        return cleanDocument;
+      }
+    }
+    
+    return null; // Documento inválido
   }
 
 
