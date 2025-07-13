@@ -67,6 +67,10 @@ export class MercadoPagoService {
       console.log('MercadoPago request payload (minimal):', JSON.stringify(paymentRequest, null, 2));
 
       const response = await this.payment.create({ body: paymentRequest });
+      
+      console.log('MercadoPago response - transaction_amount:', response.transaction_amount);
+      console.log('MercadoPago response - status:', response.status);
+      console.log('Original amount sent:', paymentData.amount);
 
       if (!response.point_of_interaction?.transaction_data) {
         throw new Error('Failed to generate PIX payment');

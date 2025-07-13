@@ -1844,6 +1844,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
       console.log('PIX payment created successfully:', {
         id: pixPayment.id,
         status: pixPayment.status,
+        amount: pixPayment.amount,
+        amountType: typeof pixPayment.amount,
         hasQrCode: !!pixPayment.qrCode,
         hasQrCodeBase64: !!pixPayment.qrCodeBase64,
         qrCodeLength: pixPayment.qrCodeBase64?.length || 0,
