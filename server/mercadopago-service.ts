@@ -61,10 +61,12 @@ export class MercadoPagoService {
             type: 'CPF',
             number: paymentData.customerDocument || '11111111111'
           }
-        },
+        }
         // notification_url removida temporariamente para evitar erro de validação
-        // date_of_expiration: this.getBrazilExpirationDate(30) // Temporariamente removido para teste
+        // date_of_expiration removido temporariamente para teste
       };
+
+      console.log('MercadoPago request payload:', JSON.stringify(paymentRequest, null, 2));
 
       const response = await this.payment.create({ body: paymentRequest });
 
