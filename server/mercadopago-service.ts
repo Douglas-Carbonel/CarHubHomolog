@@ -185,31 +185,7 @@ export class MercadoPagoService {
     return emailRegex.test(email) ? email : null;
   }
 
-  private getBrazilExpirationDate(minutesToAdd: number): string {
-    // Obter data atual UTC
-    const nowUTC = new Date();
-    
-    // Adicionar os minutos de expiração
-    const expirationUTC = new Date(nowUTC.getTime() + minutesToAdd * 60 * 1000);
-    
-    // Converter para horário do Brasil para exibição
-    const nowBrazil = new Date(nowUTC.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
-    const expirationBrazil = new Date(expirationUTC.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
-    
-    // Formato esperado pelo MercadoPago: YYYY-MM-DDTHH:MM:SS.sssZ
-    const formattedDate = expirationUTC.toISOString().replace(/\.\d{3}Z$/, '.000Z');
-    
-    console.log('PIX Expiration calculation:', {
-      nowUTC: nowUTC.toISOString(),
-      nowBrazil: nowBrazil.toLocaleString('pt-BR'),
-      minutesToAdd,
-      expirationUTC: expirationUTC.toISOString(),
-      expirationBrazil: expirationBrazil.toLocaleString('pt-BR'),
-      formattedForMP: formattedDate
-    });
-    
-    return formattedDate;
-  }
+
 }
 
 export const mercadoPagoService = new MercadoPagoService();
