@@ -353,8 +353,8 @@ export function PIXPaymentModal({
     }
   };
 
-  const shareViaWhatsApp = (pixPayment: PIXPayment) => {
-    const message = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
+  const shareViaWhatsApp = async (pixPayment: PIXPayment) => {
+    const message1 = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
 
 💰 *Valor:* R$ ${pixPayment.amount.toFixed(2)}
 📅 *Válido até:* ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
@@ -369,19 +369,43 @@ export function PIXPaymentModal({
 ✅ *Como pagar:*
 1. Abra seu app do banco
 2. Escolha PIX > Pagar
-3. Use o botão "Copiar Chave PIX" no app para copiar automaticamente
-4. Cole no seu app bancário e confirme
+3. Cole a chave PIX da próxima mensagem
+4. Confirme o pagamento`;
 
-💡 *Dica:* Após enviar esta mensagem, use o botão "Copiar Chave PIX" para facilitar o pagamento!`;
+    const message2 = `📱 *Chave PIX (Copia e Cola):*
 
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-    
-    toast({
-      title: "Mensagem enviada!",
-      description: "Informações do PIX enviadas. Use o botão 'Copiar Chave PIX' para facilitar o pagamento.",
-      duration: 5000,
-    });
+${pixPayment.pixCopyPaste}`;
+
+    try {
+      // Preparar URLs
+      const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
+      const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
+      
+      // Função para aguardar um tempo
+      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Enviar primeira mensagem
+      window.open(whatsappUrl1, '_blank');
+      
+      // Aguardar 2 segundos e enviar segunda mensagem
+      await sleep(2000);
+      window.open(whatsappUrl2, '_blank');
+      
+      // Toast de sucesso
+      toast({
+        title: "Mensagens enviadas!",
+        description: "Duas mensagens foram enviadas para o WhatsApp: informações do PIX e chave separadamente",
+        duration: 4000,
+      });
+      
+    } catch (error) {
+      console.error('Erro ao enviar mensagens:', error);
+      toast({
+        title: "Erro no envio",
+        description: "Ocorreu um erro ao enviar as mensagens. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
@@ -993,24 +1017,16 @@ export function PIXPaymentModal({
                   </Button>
                 </div>
 
-                {/* Segunda linha - Botão especial para copiar chave PIX */}
-                <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-4 rounded-lg border-2 border-emerald-400">
-                  <div className="text-center mb-3">
-                    <p className="text-white text-sm font-medium">
-                      💡 Para usuários do celular: clique aqui para copiar a chave PIX facilmente!
-                    </p>
-                  </div>
+                {/* Segunda linha - Ações principais */}
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={() => copyToClipboard(pixPayment.pixCopyPaste)}
-                    className="w-full h-14 bg-white hover:bg-gray-100 text-emerald-700 border-2 border-emerald-300 text-lg font-bold shadow-lg"
+                    variant="outline"
+                    className="flex-1 h-12 border-2 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30"
                   >
-                    <Copy className="h-5 w-5 mr-3" />
-                    Copiar Chave PIX
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar Código PIX
                   </Button>
-                </div>
-
-                {/* Terceira linha - Outras ações */}
-                <div className="flex flex-col sm:flex-row gap-3">
 
                   <Button
                     onClick={handleCheckPaymentStatus}
