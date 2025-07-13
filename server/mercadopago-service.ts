@@ -71,6 +71,7 @@ export class MercadoPagoService {
       console.log('MercadoPago response - transaction_amount:', response.transaction_amount);
       console.log('MercadoPago response - status:', response.status);
       console.log('Original amount sent:', paymentData.amount);
+      console.log('Will return amount:', paymentData.amount, 'instead of MercadoPago amount:', response.transaction_amount);
 
       if (!response.point_of_interaction?.transaction_data) {
         throw new Error('Failed to generate PIX payment');
@@ -142,10 +143,10 @@ export class MercadoPagoService {
         qrCodeBase64 = '';
       }
 
-      // Calcular data de expiração padrão (30 minutos)
+      // Calcular data de expiração padrão (30 minutos) em formato ISO
       const now = new Date();
       const expirationDate = new Date(now.getTime() + 30 * 60 * 1000);
-      const expirationBrazil = new Date(expirationDate.getTime() - (3 * 60 * 60 * 1000));
+      const expirationISO = expirationDate.toISOString();
 
       return {
         id: response.id?.toString() || '',
@@ -153,7 +154,7 @@ export class MercadoPagoService {
         qrCode: qrCodeText,
         qrCodeBase64: qrCodeBase64,
         pixCopyPaste: qrCodeText,
-        expirationDate: expirationBrazil.toLocaleString('pt-BR'),
+        expirationDate: expirationISO,
         amount: paymentData.amount // Usar o valor original enviado, não o retornado pelo MercadoPago
       };
     } catch (error) {

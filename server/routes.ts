@@ -1863,7 +1863,8 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         status: pixPayment.status,
         existingRecords: existingPix.length,
         qrCodeLength: pixPayment.qrCode?.length || 0,
-        qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0
+        qrCodeBase64Length: pixPayment.qrCodeBase64?.length || 0,
+        expirationDate: pixPayment.expirationDate
       });
       
       if (existingPix.length > 0) {
