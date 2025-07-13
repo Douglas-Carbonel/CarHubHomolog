@@ -883,7 +883,6 @@ export default function VehiclesPage() {
                                 <FormMessage />
                               </FormItem>
                             )}
-```python
                           />
                           <FormField
                             control={form.control}
