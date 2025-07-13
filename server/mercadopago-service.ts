@@ -49,24 +49,14 @@ export class MercadoPagoService {
     }
 
     try {
+      // Payload mínimo para PIX
       const paymentRequest = {
         transaction_amount: paymentData.amount,
         description: paymentData.description,
-        payment_method_id: 'pix',
-        external_reference: paymentData.externalReference,
-        payer: {
-          email: this.validateEmail(paymentData.customerEmail) || 'cliente@exemplo.com',
-          first_name: paymentData.customerName || 'Cliente',
-          identification: {
-            type: 'CPF',
-            number: paymentData.customerDocument || '11111111111'
-          }
-        }
-        // notification_url removida temporariamente para evitar erro de validação
-        // date_of_expiration removido temporariamente para teste
+        payment_method_id: 'pix'
       };
 
-      console.log('MercadoPago request payload:', JSON.stringify(paymentRequest, null, 2));
+      console.log('MercadoPago request payload (minimal):', JSON.stringify(paymentRequest, null, 2));
 
       const response = await this.payment.create({ body: paymentRequest });
 
@@ -140,13 +130,18 @@ export class MercadoPagoService {
         qrCodeBase64 = '';
       }
 
+      // Calcular data de expiração padrão (30 minutos)
+      const now = new Date();
+      const expirationDate = new Date(now.getTime() + 30 * 60 * 1000);
+      const expirationBrazil = new Date(expirationDate.getTime() - (3 * 60 * 60 * 1000));
+
       return {
         id: response.id?.toString() || '',
         status: response.status || '',
         qrCode: qrCodeText,
         qrCodeBase64: qrCodeBase64,
         pixCopyPaste: qrCodeText,
-        expirationDate: response.date_of_expiration || '',
+        expirationDate: expirationBrazil.toLocaleString('pt-BR'),
         amount: response.transaction_amount || 0
       };
     } catch (error) {
