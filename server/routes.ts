@@ -1832,7 +1832,9 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
 
       console.log('Creating PIX payment for service:', serviceId, 'with data:', {
         originalAmount: amount,
+        originalAmountType: typeof amount,
         parsedAmount: paymentData.amount,
+        parsedAmountType: typeof paymentData.amount,
         description: paymentData.description,
         customerEmail: paymentData.customerEmail
       });
@@ -1868,7 +1870,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
         await db.execute(sql`
           UPDATE pix_payments SET
             mercado_pago_id = ${pixPayment.id},
-            amount = ${paymentData.amount},
+            amount = ${pixPayment.amount},
             status = ${pixPayment.status},
             qr_code_text = ${pixPayment.qrCode},
             qr_code_base64 = ${pixPayment.qrCodeBase64},
@@ -1886,7 +1888,7 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
             service_id, mercado_pago_id, amount, status, 
             qr_code_text, qr_code_base64, expires_at, external_reference, created_at
           ) VALUES (
-            ${serviceId}, ${pixPayment.id}, ${paymentData.amount}, ${pixPayment.status},
+            ${serviceId}, ${pixPayment.id}, ${pixPayment.amount}, ${pixPayment.status},
             ${pixPayment.qrCode}, ${pixPayment.qrCodeBase64}, ${pixPayment.expirationDate}, ${paymentData.externalReference}, NOW()
           )
         `);
