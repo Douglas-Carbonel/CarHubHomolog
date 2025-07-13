@@ -240,6 +240,13 @@ export default function OCRPlateReader() {
 
   const handleNewVehicle = () => {
     if (result?.plate) {
+      // Trigger event to open vehicle modal with pre-filled plate
+      const event = new CustomEvent('openVehicleModal', {
+        detail: { plate: result.plate }
+      });
+      window.dispatchEvent(event);
+      
+      // Also update URL for fallback
       setLocation(`/vehicles?plate=${encodeURIComponent(result.plate)}`);
     }
   };
@@ -559,7 +566,14 @@ export default function OCRPlateReader() {
 
                           <div className="grid grid-cols-1 gap-2">
                             <Button
-                              onClick={handleNewVehicle}
+                              onClick={() => {
+                                console.log('Cadastrar Novo Veículo clicked for plate:', result.plate);
+                                handleNewVehicle();
+                                toast({
+                                  title: "Redirecionando...",
+                                  description: `Abrindo formulário de cadastro com a placa ${result.plate}`,
+                                });
+                              }}
                               className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white"
                             >
                               <Plus className="h-4 w-4 mr-2" />

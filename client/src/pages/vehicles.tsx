@@ -1390,7 +1390,6 @@ export default function VehiclesPage() {
                                     className="flex items-center gap-2 text-xs"
                                   >
                                     <Plus className="h-4 w-4" />
-                                    +
                                   </Button>
                                 </div>
                               </div>
@@ -1674,7 +1673,7 @@ export default function VehiclesPage() {
         <Dialog open={isSearchModalOpen} onOpenChange={setIsSearchModalOpen}>
           <DialogContent className={cn(
             "bg-gradient-to-br from-slate-50 to-blue-50/30",
-            isMobile ? "max-w-[95vw] max-h-[90vh] overflow-y-auto" : "max-w-5xl max-h-[90vh] overflow-y-auto"
+            isMobile ? "max-w-[95vw] max-h-[90vh] overflow-y-auto" : "max-w-5xl maxh-[90vh] overflow-y-auto"
           )}>
             <DialogHeader className="pb-6">
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-teal-700 to-emerald-600 bg-clip-text text-transparent flex items-center">
