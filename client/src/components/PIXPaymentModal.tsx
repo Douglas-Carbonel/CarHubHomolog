@@ -353,60 +353,7 @@ export function PIXPaymentModal({
     }
   };
 
-  const shareViaWhatsApp = async (pixPayment: PIXPayment) => {
-    const message1 = `🎯 *Pagamento PIX - Ordem de Serviço #${serviceId}*
 
-💰 *Valor:* R$ ${pixPayment.amount.toFixed(2)}
-📅 *Válido até:* ${new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
-    })}
-
-✅ *Como pagar:*
-1. Abra seu app do banco
-2. Escolha PIX > Pagar
-3. Cole a chave PIX da próxima mensagem
-4. Confirme o pagamento`;
-
-    const message2 = `📱 *Chave PIX (Copia e Cola):*
-
-${pixPayment.pixCopyPaste}`;
-
-    try {
-      // Preparar URLs
-      const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
-      const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
-      
-      // Função para aguardar um tempo
-      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Enviar primeira mensagem
-      window.open(whatsappUrl1, '_blank');
-      
-      // Aguardar 2 segundos e enviar segunda mensagem
-      await sleep(2000);
-      window.open(whatsappUrl2, '_blank');
-      
-      // Toast de sucesso
-      toast({
-        title: "Mensagens enviadas!",
-        description: "Duas mensagens foram enviadas para o WhatsApp: informações do PIX e chave separadamente",
-        duration: 4000,
-      });
-      
-    } catch (error) {
-      console.error('Erro ao enviar mensagens:', error);
-      toast({
-        title: "Erro no envio",
-        description: "Ocorreu um erro ao enviar as mensagens. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
     const message = `🎯 Pagamento PIX - Ordem de Serviço #${serviceId}
