@@ -312,6 +312,7 @@ export default function VehiclesPage() {
     const openModal = urlParams.get('openModal');
     const action = urlParams.get('action');
     const plate = urlParams.get('plate');
+    const vehicleId = urlParams.get('vehicleId');
 
     if (customerId) {
       setCustomerFilter(parseInt(customerId));
@@ -377,7 +378,18 @@ export default function VehiclesPage() {
       setCurrentVehiclePhotos([]);
       setIsModalOpen(true);
     }
-  }, [customers, form, isModalOpen]);
+
+    // Auto-open modal to edit specific vehicle (from OCR reader when vehicle exists)
+    if (vehicleId && vehicles.length > 0 && !isModalOpen) {
+      console.log('Opening edit modal for vehicle ID from URL:', vehicleId);
+      const vehicle = vehicles.find(v => v.id === parseInt(vehicleId));
+      if (vehicle) {
+        handleEdit(vehicle);
+        // Clean URL after opening modal
+        window.history.replaceState({}, '', '/vehicles');
+      }
+    }
+  }, [customers, form, isModalOpen, vehicles]);
 
   // Add event listener for custom openVehicleModal event
   useEffect(() => {
