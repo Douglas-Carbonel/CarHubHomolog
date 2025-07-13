@@ -134,19 +134,35 @@ export function PIXPaymentModal({
         // Com a nova lógica, há apenas 1 registro por serviço
         const existingPIXRecord = data[0];
 
-        // Sempre mostrar confirmação quando há PIX existente (qualquer status)
-        console.log('PIX Modal - Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
-        console.log('PIX Modal - Setting existing PIX and showing confirm overwrite');
-        setExistingPIX({
-          id: existingPIXRecord.mercado_pago_id,
-          status: existingPIXRecord.status,
-          qrCode: existingPIXRecord.qr_code_text,
-          qrCodeBase64: existingPIXRecord.qr_code_base64,
-          pixCopyPaste: existingPIXRecord.qr_code_text,
-          expirationDate: existingPIXRecord.expires_at,
-          amount: parseFloat(existingPIXRecord.amount)
-        });
-        setShowConfirmOverwrite(true);
+        // Validação específica para pagamentos já aprovados
+        if (existingPIXRecord.status === 'approved') {
+          console.log('PIX Modal - Found APPROVED PIX for service:', serviceId, 'amount:', existingPIXRecord.amount);
+          console.log('PIX Modal - Showing approved payment dialog');
+          setExistingPIX({
+            id: existingPIXRecord.mercado_pago_id,
+            status: existingPIXRecord.status,
+            qrCode: existingPIXRecord.qr_code_text,
+            qrCodeBase64: existingPIXRecord.qr_code_base64,
+            pixCopyPaste: existingPIXRecord.qr_code_text,
+            expirationDate: existingPIXRecord.expires_at,
+            amount: parseFloat(existingPIXRecord.amount)
+          });
+          setShowConfirmOverwrite(true);
+        } else {
+          // Para status pending, cancelled, rejected - mostrar confirmação normal
+          console.log('PIX Modal - Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
+          console.log('PIX Modal - Setting existing PIX and showing confirm overwrite');
+          setExistingPIX({
+            id: existingPIXRecord.mercado_pago_id,
+            status: existingPIXRecord.status,
+            qrCode: existingPIXRecord.qr_code_text,
+            qrCodeBase64: existingPIXRecord.qr_code_base64,
+            pixCopyPaste: existingPIXRecord.qr_code_text,
+            expirationDate: existingPIXRecord.expires_at,
+            amount: parseFloat(existingPIXRecord.amount)
+          });
+          setShowConfirmOverwrite(true);
+        }
         console.log('PIX Modal - showConfirmOverwrite set to TRUE');
       } else if (!data || data.length === 0) {
         console.log('PIX Modal - No PIX records found for service:', serviceId);
@@ -496,60 +512,112 @@ export function PIXPaymentModal({
         <div className="space-y-6">
           {/* Modal de confirmação para PIX existente */}
           {showConfirmOverwrite && existingPIX && (
-            <div className="bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-700 rounded-xl p-6 space-y-4">
+            <div className={`${
+              existingPIX.status === 'approved' 
+                ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700' 
+                : 'bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-700'
+            } rounded-xl p-6 space-y-4`}>
               <div className="text-center space-y-3">
-                <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
-                  <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                <div className={`mx-auto w-16 h-16 ${
+                  existingPIX.status === 'approved' 
+                    ? 'bg-green-100 dark:bg-green-900/50' 
+                    : 'bg-orange-100 dark:bg-orange-900/50'
+                } rounded-full flex items-center justify-center`}>
+                  {existingPIX.status === 'approved' ? (
+                    <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+                  ) : (
+                    <AlertCircle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                  )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
-                    QR Code PIX já existe para este serviço!
-                  </h3>
-                  <p className="text-orange-600 dark:text-orange-300 text-sm">
-                    Há um PIX de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> em aberto para esta ordem de serviço.
-                  </p>
-                  <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
-                    Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
-                  </p>
-
-                  <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
-                    <p className="text-orange-700 dark:text-orange-300 text-xs">
-                      <strong>Expira em:</strong> {new Date(existingPIX.expirationDate).toLocaleString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        timeZone: 'America/Sao_Paulo'
-                      })}
-                    </p>
-                  </div>
+                  {existingPIX.status === 'approved' ? (
+                    <>
+                      <h3 className="text-xl font-bold text-green-800 dark:text-green-200 mb-2">
+                        ✅ Pagamento PIX já foi realizado!
+                      </h3>
+                      <p className="text-green-600 dark:text-green-300 text-sm">
+                        Este serviço já recebeu um pagamento PIX de <strong>R$ {existingPIX.amount.toFixed(2)}</strong>.
+                      </p>
+                      <p className="text-green-600 dark:text-green-300 text-sm mt-2">
+                        Status: <Badge variant="default" className="ml-1 bg-green-600 text-white">{getStatusText(existingPIX.status)}</Badge>
+                      </p>
+                      <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg mt-4">
+                        <p className="text-green-700 dark:text-green-300 text-xs">
+                          <strong>💡 Deseja criar um novo PIX para um pagamento adicional?</strong>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-xl font-bold text-orange-800 dark:text-orange-200 mb-2">
+                        QR Code PIX já existe para este serviço!
+                      </h3>
+                      <p className="text-orange-600 dark:text-orange-300 text-sm">
+                        Há um PIX de <strong>R$ {existingPIX.amount.toFixed(2)}</strong> em aberto para esta ordem de serviço.
+                      </p>
+                      <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
+                        Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
+                      </p>
+                      <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
+                        <p className="text-orange-700 dark:text-orange-300 text-xs">
+                          <strong>Expira em:</strong> {new Date(existingPIX.expirationDate).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo'
+                          })}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <Separator className="bg-orange-200 dark:bg-orange-700" />
+              <Separator className={
+                existingPIX.status === 'approved' 
+                  ? 'bg-green-200 dark:bg-green-700' 
+                  : 'bg-orange-200 dark:bg-orange-700'
+              } />
 
               <div className="space-y-3">
-                <p className="text-center text-orange-700 dark:text-orange-300 text-sm font-medium">
-                  O que você deseja fazer?
+                <p className={`text-center ${
+                  existingPIX.status === 'approved' 
+                    ? 'text-green-700 dark:text-green-300' 
+                    : 'text-orange-700 dark:text-orange-300'
+                } text-sm font-medium`}>
+                  {existingPIX.status === 'approved' 
+                    ? 'Escolha uma opção:' 
+                    : 'O que você deseja fazer?'
+                  }
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  <Button
-                    onClick={handleUseExistingPIX}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Mostrar PIX Existente
-                  </Button>
+                  {existingPIX.status !== 'approved' && (
+                    <Button
+                      onClick={handleUseExistingPIX}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <QrCode className="h-4 w-4 mr-2" />
+                      Mostrar PIX Existente
+                    </Button>
+                  )}
 
                   <Button
                     onClick={handleConfirmOverwrite}
                     variant="outline"
-                    className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                    className={`w-full ${
+                      existingPIX.status === 'approved'
+                        ? 'border-green-300 text-green-700 hover:bg-green-50'
+                        : 'border-green-300 text-green-700 hover:bg-green-50'
+                    }`}
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Gerar Novo PIX
+                    {existingPIX.status === 'approved' 
+                      ? 'Criar Novo PIX (Pagamento Adicional)' 
+                      : 'Gerar Novo PIX'
+                    }
                   </Button>
 
                   <Button
