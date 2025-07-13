@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import CameraCapture from "@/components/camera/camera-capture";
 
 interface LicensePlateResult {
@@ -106,18 +107,31 @@ export default function PlateReaderButton({ onPlateDetected, className }: PlateR
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => {
-          resetModal();
-          setIsModalOpen(true);
-        }}
-        className={className}
-      >
-        <Scan className="h-4 w-4 mr-2" />
-        Ler Placa
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                resetModal();
+                setIsModalOpen(true);
+              }}
+              className="h-8 w-8 p-0 text-slate-500 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+            >
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Scan className="h-4 w-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Ler placa com câmera</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-md">

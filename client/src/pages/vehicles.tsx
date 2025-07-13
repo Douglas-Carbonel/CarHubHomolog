@@ -794,10 +794,10 @@ export default function VehiclesPage() {
                                 Placa
                               </FormLabel>
                               <FormControl>
-                                <div className="flex gap-2">
+                                <div className="relative">
                                   <Input 
                                     placeholder="ABC-1234" 
-                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
+                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase pr-10"
                                     maxLength={8}
                                     {...field}
                                     onChange={(e) => {
@@ -808,16 +808,17 @@ export default function VehiclesPage() {
                                       field.onChange(value);
                                     }}
                                   />
-                                  <PlateReaderButton
-                                    onPlateDetected={(plate) => {
-                                      let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                      if (value.length > 3) {
-                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
-                                      }
-                                      field.onChange(value);
-                                    }}
-                                    className="h-11 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 border-0 text-white"
-                                  />
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <PlateReaderButton
+                                      onPlateDetected={(plate) => {
+                                        let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                        if (value.length > 3) {
+                                          value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                        }
+                                        field.onChange(value);
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               </FormControl>
                               <FormMessage />
@@ -1295,10 +1296,10 @@ export default function VehiclesPage() {
                                 Placa
                               </FormLabel>
                               <FormControl>
-                                <div className="flex gap-2">
+                                <div className="relative">
                                   <Input 
                                     placeholder="ABC-1234" 
-                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
+                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase pr-10"
                                     maxLength={8}
                                     {...field}
                                     onChange={(e) => {
@@ -1309,16 +1310,17 @@ export default function VehiclesPage() {
                                       field.onChange(value);
                                     }}
                                   />
-                                  <PlateReaderButton
-                                    onPlateDetected={(plate) => {
-                                      let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                      if (value.length > 3) {
-                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
-                                      }
-                                      field.onChange(value);
-                                    }}
-                                    className="h-11 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 border-0 text-white"
-                                  />
+                                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                                    <PlateReaderButton
+                                      onPlateDetected={(plate) => {
+                                        let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                        if (value.length > 3) {
+                                          value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                        }
+                                        field.onChange(value);
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               </FormControl>
                               <FormMessage />
