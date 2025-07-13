@@ -307,49 +307,7 @@ export default function OCRPlateReader() {
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-6xl mx-auto space-y-6">
 
-            {/* Entrada Manual */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-gray-800">
-                  <Type className="h-5 w-5 text-blue-600" />
-                  Entrada Manual
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Digite a placa do veículo para validação
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6">
-                <div className="space-y-2">
-                  <Label htmlFor="manual-plate" className="text-sm font-medium text-gray-700">
-                    Placa do Veículo
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="manual-plate"
-                      placeholder="Ex: ABC1234 ou ABC1D23"
-                      value={manualPlate}
-                      onChange={(e) => setManualPlate(e.target.value.toUpperCase())}
-                      className="flex-1 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20"
-                      maxLength={7}
-                    />
-                    <Button
-                      onClick={processManualPlate}
-                      disabled={isProcessingManual || !manualPlate.trim()}
-                      className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
-                    >
-                      {isProcessingManual ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Validando...
-                        </>
-                      ) : (
-                        'Validar'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Upload Section */}
@@ -616,30 +574,50 @@ export default function OCRPlateReader() {
             </div>
 
             {/* Instructions */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-t-lg">
-                <CardTitle className="text-gray-800">Como usar</CardTitle>
+            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Scan className="h-5 w-5 text-blue-400" />
+                  Como usar o sistema
+                </CardTitle>
+                <CardDescription className="text-slate-200">
+                  Siga os passos abaixo para processar placas de veículos
+                </CardDescription>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <h4 className="font-medium mb-2 text-gray-800">1. Entrada Manual</h4>
-                    <p className="text-gray-600">
-                      Digite a placa diretamente para validação instantânea
+              <CardContent className="p-6 bg-gradient-to-br from-slate-50 to-blue-50/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        1
+                      </div>
+                      <h4 className="font-semibold text-slate-800">Capturar Imagem</h4>
+                    </div>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Use a câmera para fotografar ou faça upload de uma imagem da placa do veículo para reconhecimento automático
                     </p>
                   </div>
-                  <div>
-                    <h4 className="font-medium mb-2 text-gray-800">2. Captura de Imagem</h4>
-                    <p className="text-gray-600">
-                      Use a câmera ou faça upload para reconhecimento automático
+                  <div className="bg-white p-4 rounded-lg shadow-md border border-slate-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        2
+                      </div>
+                      <h4 className="font-semibold text-slate-800">Processar e Usar</h4>
+                    </div>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Após o processamento, cadastre um novo veículo ou verifique se a placa já existe no sistema
                     </p>
                   </div>
-                  <div>
-                    <h4 className="font-medium mb-2 text-gray-800">3. Use o resultado</h4>
-                    <p className="text-gray-600">
-                      Cadastre novo veículo ou verifique placas existentes
-                    </p>
+                </div>
+                
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 text-blue-800 mb-2">
+                    <Type className="h-4 w-4" />
+                    <span className="font-medium text-sm">Dica:</span>
                   </div>
+                  <p className="text-blue-700 text-sm">
+                    Para melhores resultados, fotografe a placa em boa iluminação e mantenha a câmera estável
+                  </p>
                 </div>
               </CardContent>
             </Card>
