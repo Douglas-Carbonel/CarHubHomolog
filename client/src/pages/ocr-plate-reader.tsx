@@ -196,21 +196,43 @@ export default function OCRPlateReader() {
   const checkPlateInSystem = async (plate: string) => {
     setIsCheckingPlate(true);
     try {
+      console.log('Checking plate in system:', plate);
       const response = await fetch('/api/vehicles');
       if (!response.ok) throw new Error('Erro ao buscar veículos');
       
       const vehicles = await response.json();
-      const found = vehicles.find((v: Vehicle) => 
-        v.licensePlate.replace(/[^A-Z0-9]/g, '') === plate.replace(/[^A-Z0-9]/g, '')
-      );
+      console.log('All vehicles:', vehicles.length);
       
-      setPlateExists(found || null);
+      const found = vehicles.find((v: Vehicle) => {
+        const vehiclePlate = v.licensePlate.replace(/[^A-Z0-9]/g, '').toUpperCase();
+        const searchPlate = plate.replace(/[^A-Z0-9]/g, '').toUpperCase();
+        console.log('Comparing:', vehiclePlate, 'vs', searchPlate);
+        return vehiclePlate === searchPlate;
+      });
+      
+      console.log('Found vehicle:', found);
+      
+      if (found) {
+        setPlateExists(found);
+        toast({
+          title: "Placa encontrada!",
+          description: `Veículo ${found.brand} ${found.model} encontrado no sistema`,
+        });
+      } else {
+        setPlateExists(null);
+        toast({
+          title: "Placa não encontrada",
+          description: "Esta placa não está cadastrada no sistema",
+        });
+      }
     } catch (err) {
+      console.error('Error checking plate:', err);
       toast({
         title: "Erro ao verificar placa",
         description: "Não foi possível verificar se a placa existe no sistema",
         variant: "destructive",
       });
+      setPlateExists(null);
     } finally {
       setIsCheckingPlate(false);
     }
@@ -519,9 +541,13 @@ export default function OCRPlateReader() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => checkPlateInSystem(result.plate)}
-                              disabled={isCheckingPlate}
+                              onClick={() => {
+                                console.log('Quick verify clicked for plate:', result.plate);
+                                checkPlateInSystem(result.plate);
+                              }}
+                              disabled={isCheckingPlate || !result.plate}
                               className="text-blue-600 hover:text-blue-800"
+                              title="Verificar se esta placa existe no sistema"
                             >
                               {isCheckingPlate ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -541,9 +567,12 @@ export default function OCRPlateReader() {
                             </Button>
                             
                             <Button
-                              onClick={() => checkPlateInSystem(result.plate)}
+                              onClick={() => {
+                                console.log('Verificar no Sistema clicked for plate:', result.plate);
+                                checkPlateInSystem(result.plate);
+                              }}
                               variant="outline"
-                              disabled={isCheckingPlate}
+                              disabled={isCheckingPlate || !result.plate}
                               className="border-blue-200 text-blue-700 hover:bg-blue-50"
                             >
                               {isCheckingPlate ? (
