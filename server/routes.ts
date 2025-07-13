@@ -1988,6 +1988,87 @@ app.post("/api/notifications/subscribe", requireAuth, async (req, res) => {
     }
   });
 
+  // Endpoint para verificar status de pagamento PIX específico
+  app.get("/api/mercadopago/check-pix-status", requireAuth, async (req, res) => {
+    try {
+      const { paymentId } = req.query;
+
+      if (!paymentId || typeof paymentId !== 'string') {
+        return res.status(400).json({ message: "Payment ID é obrigatório" });
+      }
+
+      console.log(`Checking PIX payment status for payment ID: ${paymentId}`);
+      
+      const paymentStatus = await mercadoPagoService.getPaymentStatus(paymentId);
+      console.log(`Payment ${paymentId} status from MercadoPago:`, paymentStatus);
+
+      // Atualizar status no banco
+      const updateResult = await db.execute(sql`
+        UPDATE pix_payments 
+        SET status = ${paymentStatus.status}, 
+            paid_at = ${paymentStatus.date_approved || null},
+            updated_at = NOW()
+        WHERE mercado_pago_id = ${paymentId}
+        RETURNING service_id, amount, status
+      `);
+
+      console.log(`Database update result for payment ${paymentId}:`, updateResult.rows);
+
+      // Se foi aprovado, atualizar o serviço também
+      if (paymentStatus.status === 'approved' && updateResult.rows.length > 0) {
+        const serviceId = updateResult.rows[0].service_id;
+        const amount = parseFloat(updateResult.rows[0].amount);
+
+        console.log(`Payment approved! Updating service ${serviceId} with PIX amount: ${amount}`);
+
+        // Verificar valor PIX atual no serviço
+        const currentService = await db.execute(sql`
+          SELECT pix_pago, valor_pago FROM services WHERE id = ${serviceId}
+        `);
+
+        if (currentService.rows.length > 0) {
+          const currentPixPago = parseFloat(currentService.rows[0].pix_pago || '0');
+          const currentValorPago = parseFloat(currentService.rows[0].valor_pago || '0');
+          
+          console.log(`Current service values - PIX pago: ${currentPixPago}, Valor pago: ${currentValorPago}`);
+
+          // Só atualizar se este valor específico ainda não foi contabilizado
+          if (currentPixPago < amount || currentPixPago === 0) {
+            const newPixPago = amount;
+            const newValorPago = currentValorPago - currentPixPago + amount; // Remove o valor antigo e adiciona o novo
+
+            await db.execute(sql`
+              UPDATE services 
+              SET pix_pago = ${newPixPago},
+                  valor_pago = ${newValorPago},
+                  updated_at = NOW()
+              WHERE id = ${serviceId}
+            `);
+
+            console.log(`Service ${serviceId} updated - New PIX pago: ${newPixPago}, New valor pago: ${newValorPago}`);
+          } else {
+            console.log(`Service ${serviceId} already has this PIX amount counted: ${currentPixPago}`);
+          }
+        }
+      }
+
+      res.json({
+        id: paymentStatus.id,
+        status: paymentStatus.status,
+        status_detail: paymentStatus.status_detail,
+        transaction_amount: paymentStatus.transaction_amount,
+        date_approved: paymentStatus.date_approved,
+        external_reference: paymentStatus.external_reference
+      });
+    } catch (error) {
+      console.error("Error checking PIX payment status:", error);
+      res.status(500).json({ 
+        message: "Erro ao verificar status do pagamento PIX",
+        error: error instanceof Error ? error.message : "Erro desconhecido"
+      });
+    }
+  });
+
   // Webhook do MercadoPago para notificações de pagamento
   app.post("/api/mercadopago/webhook", async (req, res) => {
     try {
