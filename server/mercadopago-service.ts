@@ -1,5 +1,6 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import * as QRCode from 'qrcode';
+import { BrazilTimezone } from './brazil-timezone';
 
 export interface PIXPaymentData {
   amount: number;
@@ -62,7 +63,7 @@ export class MercadoPagoService {
           }
         },
         // notification_url removida temporariamente para evitar erro de validação
-        date_of_expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutos
+        date_of_expiration: this.getBrazilExpirationDate(30) // 30 minutos no fuso do Brasil
       };
 
       const response = await this.payment.create({ body: paymentRequest });
@@ -185,6 +186,17 @@ export class MercadoPagoService {
     if (!email) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email) ? email : null;
+  }
+
+  private getBrazilExpirationDate(minutesToAdd: number): string {
+    // Obter data/hora atual no Brasil
+    const nowBrazil = BrazilTimezone.getCurrentDateTime();
+    
+    // Adicionar os minutos de expiração
+    const expirationBrazil = new Date(nowBrazil.getTime() + minutesToAdd * 60 * 1000);
+    
+    // Converter para ISO string (que o MercadoPago espera)
+    return expirationBrazil.toISOString();
   }
 }
 
