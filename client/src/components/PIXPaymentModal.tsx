@@ -376,15 +376,32 @@ export function PIXPaymentModal({
 
 ${pixPayment.pixCopyPaste}`;
 
-    // Enviar primeira mensagem
-    const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
-    window.open(whatsappUrl1, '_blank');
+    // Função para enviar mensagens sequencialmente
+    const sendMessages = async () => {
+      // Enviar primeira mensagem
+      const whatsappUrl1 = `https://wa.me/?text=${encodeURIComponent(message1)}`;
+      window.open(whatsappUrl1, '_blank');
 
-    // Após um pequeno delay, enviar segunda mensagem
-    setTimeout(() => {
-      const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
-      window.open(whatsappUrl2, '_blank');
-    }, 1000);
+      // Toast para informar o usuário
+      toast({
+        title: "1ª mensagem enviada!",
+        description: "A 2ª mensagem com a chave PIX será enviada em 3 segundos...",
+        duration: 3000,
+      });
+
+      // Aguardar 3 segundos e enviar segunda mensagem
+      setTimeout(() => {
+        const whatsappUrl2 = `https://wa.me/?text=${encodeURIComponent(message2)}`;
+        window.open(whatsappUrl2, '_blank');
+        
+        toast({
+          title: "2ª mensagem enviada!",
+          description: "Chave PIX compartilhada com sucesso!",
+        });
+      }, 3000);
+    };
+
+    sendMessages();
   };
 
   const shareViaGeneric = async (pixPayment: PIXPayment) => {
