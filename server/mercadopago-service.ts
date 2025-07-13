@@ -29,15 +29,20 @@ export class MercadoPagoService {
     const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
     
     if (accessToken) {
+      // Detectar se é produção ou sandbox baseado no token
+      const isProduction = !accessToken.includes('TEST');
+      
       this.client = new MercadoPagoConfig({
         accessToken: accessToken,
         options: {
-          timeout: 5000,
-          idempotencyKey: 'abc'
+          timeout: 10000, // Aumentar timeout
+          // Remover idempotencyKey fixo para evitar conflitos
         }
       });
 
       this.payment = new Payment(this.client);
+      
+      console.log(`MercadoPago configurado em modo: ${isProduction ? 'PRODUÇÃO' : 'SANDBOX'}`);
     } else {
       console.warn('MercadoPago access token not configured. PIX functionality will be disabled.');
     }
@@ -49,17 +54,21 @@ export class MercadoPagoService {
     }
 
     try {
-      // Calcular data de expiração (30 minutos) em formato ISO
-      const expirationDate = new Date(Date.now() + 30 * 60 * 1000);
+      // Garantir valor mínimo de R$ 0.01
+      const amount = Math.max(paymentData.amount, 0.01);
+      
+      // Calcular data de expiração (24 horas) em formato ISO para produção
+      const expirationDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
       
       console.log('PIX Expiration setup:');
       console.log('Current time:', new Date().toISOString());
       console.log('Expiration time:', expirationDate.toISOString());
-      console.log('Minutes from now:', Math.round((expirationDate.getTime() - Date.now()) / (1000 * 60)));
+      console.log('Hours from now:', Math.round((expirationDate.getTime() - Date.now()) / (1000 * 60 * 60)));
+      console.log('Original amount:', paymentData.amount, 'Final amount:', amount);
       
-      // Payload com informações mínimas do pagador e data de expiração
+      // Payload otimizado para produção
       const paymentRequest = {
-        transaction_amount: paymentData.amount,
+        transaction_amount: amount,
         description: paymentData.description,
         payment_method_id: 'pix',
         date_of_expiration: expirationDate.toISOString(),
@@ -70,32 +79,41 @@ export class MercadoPagoService {
             type: 'CPF',
             number: paymentData.customerDocument || '11111111111'
           }
-        }
+        },
+        external_reference: paymentData.externalReference
       };
 
-      console.log('MercadoPago request payload (with expiration):', JSON.stringify(paymentRequest, null, 2));
+      console.log('MercadoPago request payload (PRODUÇÃO):', JSON.stringify(paymentRequest, null, 2));
 
       const response = await this.payment.create({ body: paymentRequest });
       
       console.log('MercadoPago response - transaction_amount:', response.transaction_amount);
       console.log('MercadoPago response - status:', response.status);
       console.log('MercadoPago response - date_of_expiration:', response.date_of_expiration);
-      console.log('Original amount sent:', paymentData.amount);
-      console.log('Will return amount:', paymentData.amount, 'instead of MercadoPago amount:', response.transaction_amount);
+      console.log('MercadoPago response - id:', response.id);
       
-      // Detectar se a data de expiração retornada é passada (bug do sandbox)
-      const returnedExpiration = new Date(response.date_of_expiration);
-      const now = new Date();
-      const isExpired = returnedExpiration < now;
+      // Para produção, sempre usar a data de expiração que enviamos
+      const isProduction = !process.env.MERCADOPAGO_ACCESS_TOKEN?.includes('TEST');
       
-      console.log('Expiration date check:');
-      console.log('- Returned expiration:', returnedExpiration.toISOString());
-      console.log('- Current time:', now.toISOString());
-      console.log('- Is expired:', isExpired);
-      
-      // Se expirou, usar nossa data de expiração original
-      const finalExpirationDate = isExpired ? expirationDate.toISOString() : response.date_of_expiration;
-      console.log('Final expiration date to use:', finalExpirationDate);
+      let finalExpirationDate;
+      if (isProduction) {
+        // Em produção, usar nossa data de expiração
+        finalExpirationDate = expirationDate.toISOString();
+        console.log('PRODUÇÃO: Usando nossa data de expiração:', finalExpirationDate);
+      } else {
+        // Em sandbox, verificar se a data retornada é válida
+        const returnedExpiration = new Date(response.date_of_expiration);
+        const now = new Date();
+        const isExpired = returnedExpiration < now;
+        
+        console.log('SANDBOX - Expiration date check:');
+        console.log('- Returned expiration:', returnedExpiration.toISOString());
+        console.log('- Current time:', now.toISOString());
+        console.log('- Is expired:', isExpired);
+        
+        finalExpirationDate = isExpired ? expirationDate.toISOString() : response.date_of_expiration;
+        console.log('SANDBOX - Final expiration date to use:', finalExpirationDate);
+      }
 
       if (!response.point_of_interaction?.transaction_data) {
         throw new Error('Failed to generate PIX payment');
@@ -174,7 +192,7 @@ export class MercadoPagoService {
         qrCodeBase64: qrCodeBase64,
         pixCopyPaste: qrCodeText,
         expirationDate: finalExpirationDate,
-        amount: paymentData.amount // Usar o valor original enviado, não o retornado pelo MercadoPago
+        amount: amount // Usar o valor ajustado (mínimo R$ 0,01)
       };
     } catch (error) {
       console.error('Error creating PIX payment:', error);
