@@ -45,16 +45,16 @@ export function PIXPaymentModal({
       maximumFractionDigits: 2
     }) : ""
   );
-  
+
   const formatCurrency = (value: string) => {
     // Remove tudo que não é dígito
     const numbers = value.replace(/\D/g, '');
     if (!numbers) return '';
-    
+
     // Converte para centavos e depois para reais
     const cents = parseInt(numbers);
     const reais = cents / 100;
-    
+
     // Formata como moeda
     return reais.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
@@ -118,22 +118,22 @@ export function PIXPaymentModal({
       userConfirmedOverwrite,
       open
     });
-    
+
     if (checkExistingPIX.data && checkExistingPIX.isSuccess && open) {
       const data = checkExistingPIX.data;
       console.log('PIX Modal - Processing query success with data:', data);
-      
+
       // NUNCA processar se há PIX gerado, está gerando, já há PIX existente detectado, ou usuário confirmou sobrescrever
       if (pixPayment || isGenerating || existingPIX || userConfirmedOverwrite) {
         console.log('PIX Modal - Ignorando query result - PIX já existe, gerando, existingPIX definido, ou usuário confirmou sobrescrever');
         return;
       }
-      
+
       // Só processar se modal está aberto e não há confirmação já exibida
       if (data && data.length > 0 && !showConfirmOverwrite) {
         // Com a nova lógica, há apenas 1 registro por serviço
         const existingPIXRecord = data[0];
-        
+
         // Sempre mostrar confirmação quando há PIX existente (qualquer status)
         console.log('PIX Modal - Found existing PIX for service:', serviceId, 'status:', existingPIXRecord.status);
         console.log('PIX Modal - Setting existing PIX and showing confirm overwrite');
@@ -158,7 +158,7 @@ export function PIXPaymentModal({
         }
       }
     }
-    
+
     if (checkExistingPIX.isError) {
       console.error('PIX Modal - Error checking existing PIX:', checkExistingPIX.error);
     }
@@ -222,12 +222,12 @@ export function PIXPaymentModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Erro ao criar PIX");
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -237,9 +237,9 @@ export function PIXPaymentModal({
       setPixPayment(data);
       setExistingPIX(null);
       setShowConfirmOverwrite(false);
-      
+
       console.log('PIX states set - should show QR code now');
-      
+
       toast({
         title: "PIX gerado com sucesso!",
         description: "O QR Code e chave PIX foram criados.",
@@ -285,7 +285,7 @@ export function PIXPaymentModal({
     // Iniciar geração do PIX diretamente
     setIsGenerating(true);
     setShowConfirmOverwrite(false); // Esconder modal de confirmação
-    
+
     createPIXMutation.mutate({
       serviceId,
       amount: numericAmount,
@@ -304,7 +304,7 @@ export function PIXPaymentModal({
     setPixPayment(null);
     setIsGenerating(false);
     setUserConfirmedOverwrite(true); // Marcar que usuário confirmou para evitar re-detecção
-    
+
     // Limpar também o cache para evitar re-detecção
     queryClient.removeQueries({ queryKey: [`/api/mercadopago/service/${serviceId}/pix`] });
   };
@@ -418,10 +418,17 @@ export function PIXPaymentModal({
                   <p className="text-orange-600 dark:text-orange-300 text-sm mt-2">
                     Status: <Badge variant="secondary" className="ml-1">{getStatusText(existingPIX.status)}</Badge>
                   </p>
-                  
+
                   <div className="bg-orange-100 dark:bg-orange-900/30 p-3 rounded-lg mt-4">
-                    <p className="text-xs text-orange-600 dark:text-orange-400">
-                      💡 <strong>Dica:</strong> Você pode usar o QR Code existente ou gerar um novo (o registro será atualizado).
+                    <p className="text-orange-700 dark:text-orange-300 text-xs">
+                      <strong>Expira em:</strong> {new Date(existingPIX.expirationDate).toLocaleString('pt-BR', {
+                        timeZone: 'America/Sao_Paulo',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
                 </div>
@@ -433,7 +440,7 @@ export function PIXPaymentModal({
                 <p className="text-center text-orange-700 dark:text-orange-300 text-sm font-medium">
                   O que você deseja fazer?
                 </p>
-                
+
                 <div className="flex flex-col gap-3">
                   <Button
                     onClick={handleUseExistingPIX}
@@ -442,7 +449,7 @@ export function PIXPaymentModal({
                     <QrCode className="h-4 w-4 mr-2" />
                     Mostrar PIX Existente
                   </Button>
-                  
+
                   <Button
                     onClick={handleConfirmOverwrite}
                     variant="outline"
@@ -451,7 +458,7 @@ export function PIXPaymentModal({
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Gerar Novo PIX
                   </Button>
-                  
+
                   <Button
                     onClick={handleCancelOverwrite}
                     variant="ghost"
@@ -613,7 +620,7 @@ export function PIXPaymentModal({
                     <Smartphone className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100">Escaneie o QR Code</h4>
                   </div>
-                  
+
 
                   {pixPayment.qrCodeBase64 && pixPayment.qrCodeBase64.startsWith('data:image/') ? (
                     <div className="bg-white p-4 rounded-xl border-2 border-gray-200 shadow-sm">
@@ -628,7 +635,7 @@ export function PIXPaymentModal({
                         onError={(e) => {
                           const target = e.currentTarget;
                           const container = target.parentNode as HTMLElement;
-                          
+
                           if (container && !container.querySelector('.qr-error')) {
                             target.style.display = 'none';
                             const errorDiv = document.createElement('div');
@@ -697,6 +704,7 @@ export function PIXPaymentModal({
                         <span className="text-gray-600 dark:text-gray-400">Expira em:</span>
                         <span className="text-gray-900 dark:text-gray-100">
                           {new Date(pixPayment.expirationDate).toLocaleString('pt-BR', {
+                            timeZone: 'America/Sao_Paulo',
                             day: '2-digit',
                             month: '2-digit',
                             hour: '2-digit',
