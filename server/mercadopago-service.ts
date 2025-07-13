@@ -49,11 +49,19 @@ export class MercadoPagoService {
     }
 
     try {
-      // Payload mínimo para PIX
+      // Payload com informações mínimas do pagador
       const paymentRequest = {
         transaction_amount: paymentData.amount,
         description: paymentData.description,
-        payment_method_id: 'pix'
+        payment_method_id: 'pix',
+        payer: {
+          email: this.validateEmail(paymentData.customerEmail) || 'cliente@exemplo.com',
+          first_name: paymentData.customerName || 'Cliente',
+          identification: {
+            type: 'CPF',
+            number: paymentData.customerDocument || '11111111111'
+          }
+        }
       };
 
       console.log('MercadoPago request payload (minimal):', JSON.stringify(paymentRequest, null, 2));
