@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Car, User, Wrench, FileText, Camera } from "lucide-react";
+import PlateReaderButton from "@/components/plate-reader-button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertVehicleSchema, type Vehicle, type Customer, type Photo } from "@shared/schema";
@@ -1202,19 +1203,31 @@ export default function VehiclesPage() {
                                 Placa
                               </FormLabel>
                               <FormControl>
-                                <Input 
-                                  placeholder="ABC-1234" 
-                                  className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
-                                  maxLength={8}
-                                  {...field}
-                                  onChange={(e) => {
-                                    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                    if (value.length > 3) {
-                                      value = value.slice(0, 3) + '-' + value.slice(3, 7);
-                                    }
-                                    field.onChange(value);
-                                  }}
-                                />
+                                <div className="flex gap-2">
+                                  <Input 
+                                    placeholder="ABC-1234" 
+                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
+                                    maxLength={8}
+                                    {...field}
+                                    onChange={(e) => {
+                                      let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                      if (value.length > 3) {
+                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                      }
+                                      field.onChange(value);
+                                    }}
+                                  />
+                                  <PlateReaderButton
+                                    onPlateDetected={(plate) => {
+                                      let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                      if (value.length > 3) {
+                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                      }
+                                      field.onChange(value);
+                                    }}
+                                    className="h-11 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 border-0 text-white"
+                                  />
+                                </div>
                               </FormControl>
                               <FormMessage />
                             </FormItem>
