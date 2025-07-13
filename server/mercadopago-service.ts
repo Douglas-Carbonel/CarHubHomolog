@@ -150,7 +150,7 @@ export class MercadoPagoService {
         qrCodeBase64: qrCodeBase64,
         pixCopyPaste: qrCodeText,
         expirationDate: expirationBrazil.toLocaleString('pt-BR'),
-        amount: response.transaction_amount || 0
+        amount: paymentData.amount // Usar o valor original enviado, não o retornado pelo MercadoPago
       };
     } catch (error) {
       console.error('Error creating PIX payment:', error);
