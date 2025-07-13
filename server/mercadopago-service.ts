@@ -189,14 +189,21 @@ export class MercadoPagoService {
   }
 
   private getBrazilExpirationDate(minutesToAdd: number): string {
-    // Criar data atual UTC
-    const now = new Date();
+    // Obter data atual no fuso horário do Brasil
+    const nowBrazil = BrazilTimezone.getCurrentDateTime();
     
     // Adicionar os minutos de expiração
-    const expirationUTC = new Date(now.getTime() + minutesToAdd * 60 * 1000);
+    const expirationBrazil = new Date(nowBrazil.getTime() + minutesToAdd * 60 * 1000);
+    
+    console.log('PIX Expiration calculation:', {
+      nowBrazil: nowBrazil.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      minutesToAdd,
+      expirationBrazil: expirationBrazil.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      expirationISO: expirationBrazil.toISOString()
+    });
     
     // O MercadoPago espera formato ISO UTC
-    return expirationUTC.toISOString();
+    return expirationBrazil.toISOString();
   }
 }
 
