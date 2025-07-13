@@ -455,6 +455,15 @@ export default function VehiclesPage() {
         setTemporaryPhotos([]); // Clear temporary photos after saving
       }
 
+      // Clear URL parameters that might cause modal to reopen
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('plate') || urlParams.get('openModal')) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('plate');
+        newUrl.searchParams.delete('openModal');
+        window.history.replaceState({}, '', newUrl.toString());
+      }
+
       toast({
         title: "Veículo cadastrado!",
         description: "O veículo foi cadastrado com sucesso.",
