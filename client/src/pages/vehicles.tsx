@@ -396,7 +396,7 @@ export default function VehiclesPage() {
     const handleOpenVehicleModal = (event: CustomEvent) => {
       console.log('Custom event received:', event.detail);
       const { plate } = event.detail;
-      
+
       if (plate) {
         setEditingVehicle(null);
         const defaultValues = {
@@ -420,7 +420,7 @@ export default function VehiclesPage() {
     };
 
     window.addEventListener('openVehicleModal', handleOpenVehicleModal as EventListener);
-    
+
     return () => {
       window.removeEventListener('openVehicleModal', handleOpenVehicleModal as EventListener);
     };
@@ -785,33 +785,45 @@ export default function VehiclesPage() {
                             )}
                           />
                           <FormField
-                        control={form.control}
-                        name="licensePlate"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="text-sm font-semibold text-slate-700 flex items-center">
-                              <Car className="h-4 w-4 mr-2 text-teal-600" />
-                              Placa
-                            </FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="ABC-1234" 
-                                className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
-                                maxLength={8}
-                                {...field}
-                                onChange={(e) => {
-                                  let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                                  if (value.length > 3) {
-                                    value = value.slice(0, 3) + '-' + value.slice(3, 7);
-                                  }
-                                  field.onChange(value);
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          control={form.control}
+                          name="licensePlate"
+                          render={({ field }) => (
+                            <FormItem className="space-y-2">
+                              <FormLabel className="text-sm font-semibold text-slate-700 flex items-center">
+                                <Car className="h-4 w-4 mr-2 text-teal-600" />
+                                Placa
+                              </FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <Input 
+                                    placeholder="ABC-1234" 
+                                    className="h-11 bg-white/80 border-slate-200 rounded-lg uppercase"
+                                    maxLength={8}
+                                    {...field}
+                                    onChange={(e) => {
+                                      let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                      if (value.length > 3) {
+                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                      }
+                                      field.onChange(value);
+                                    }}
+                                  />
+                                  <PlateReaderButton
+                                    onPlateDetected={(plate) => {
+                                      let value = plate.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                      if (value.length > 3) {
+                                        value = value.slice(0, 3) + '-' + value.slice(3, 7);
+                                      }
+                                      field.onChange(value);
+                                    }}
+                                    className="h-11 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 border-0 text-white"
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -871,6 +883,7 @@ export default function VehiclesPage() {
                                 <FormMessage />
                               </FormItem>
                             )}
+```python
                           />
                           <FormField
                             control={form.control}
@@ -1680,8 +1693,7 @@ export default function VehiclesPage() {
                             Serviços
                           </Button>
                           <Button
-                            size="sm"
-                            variant="outline"
+                            size="sm"variant="outline"
                             onClick={() => handleEdit(vehicle)}
                             className="text-xs border-orange-200 text-orange-700 hover:bg-orange-50"
                           >
