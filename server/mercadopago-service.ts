@@ -73,12 +73,13 @@ export class MercadoPagoService {
         }
       };
 
-      console.log('MercadoPago request payload (minimal):', JSON.stringify(paymentRequest, null, 2));
+      console.log('MercadoPago request payload (with expiration):', JSON.stringify(paymentRequest, null, 2));
 
       const response = await this.payment.create({ body: paymentRequest });
       
       console.log('MercadoPago response - transaction_amount:', response.transaction_amount);
       console.log('MercadoPago response - status:', response.status);
+      console.log('MercadoPago response - date_of_expiration:', response.date_of_expiration);
       console.log('Original amount sent:', paymentData.amount);
       console.log('Will return amount:', paymentData.amount, 'instead of MercadoPago amount:', response.transaction_amount);
 
