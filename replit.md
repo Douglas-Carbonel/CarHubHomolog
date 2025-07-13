@@ -128,6 +128,8 @@ This is a comprehensive automotive service management system built as a full-sta
 
 ```
 Changelog:
+- July 13, 2025. FIXED: PIX generation issues - resolved MercadoPago API errors by fixing payload structure and removing problematic date_of_expiration field that was causing validation errors
+- July 13, 2025. ENHANCED: PIX system now uses correct amount values (fixed 0.01 bug) and properly calculates expiration times in Brazil timezone
 - July 12, 2025. REFINED: PIX system now maintains exactly 1 record per service - existing PIX records are updated instead of creating duplicates, ensuring clean database structure
 - July 12, 2025. ENHANCED: PIX validation shows confirmation dialog for ANY existing PIX (pending, paid, cancelled) giving user choice to use existing QR code or generate new one
 - July 10, 2025. ADDED: Smart PIX validation system - automatically detects existing PIX and prompts user with options to use existing or generate new
