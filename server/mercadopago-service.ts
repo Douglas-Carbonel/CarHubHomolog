@@ -63,7 +63,7 @@ export class MercadoPagoService {
           }
         },
         // notification_url removida temporariamente para evitar erro de validação
-        date_of_expiration: this.getBrazilExpirationDate(30) // 30 minutos no fuso do Brasil
+        // date_of_expiration: this.getBrazilExpirationDate(30) // Temporariamente removido para teste
       };
 
       const response = await this.payment.create({ body: paymentRequest });
@@ -189,21 +189,29 @@ export class MercadoPagoService {
   }
 
   private getBrazilExpirationDate(minutesToAdd: number): string {
-    // Obter data atual no fuso horário do Brasil
-    const nowBrazil = BrazilTimezone.getCurrentDateTime();
+    // Obter data atual UTC
+    const nowUTC = new Date();
     
     // Adicionar os minutos de expiração
-    const expirationBrazil = new Date(nowBrazil.getTime() + minutesToAdd * 60 * 1000);
+    const expirationUTC = new Date(nowUTC.getTime() + minutesToAdd * 60 * 1000);
+    
+    // Converter para horário do Brasil para exibição
+    const nowBrazil = new Date(nowUTC.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
+    const expirationBrazil = new Date(expirationUTC.getTime() - (3 * 60 * 60 * 1000)); // UTC-3
+    
+    // Formato esperado pelo MercadoPago: YYYY-MM-DDTHH:MM:SS.sssZ
+    const formattedDate = expirationUTC.toISOString().replace(/\.\d{3}Z$/, '.000Z');
     
     console.log('PIX Expiration calculation:', {
-      nowBrazil: nowBrazil.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      nowUTC: nowUTC.toISOString(),
+      nowBrazil: nowBrazil.toLocaleString('pt-BR'),
       minutesToAdd,
-      expirationBrazil: expirationBrazil.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-      expirationISO: expirationBrazil.toISOString()
+      expirationUTC: expirationUTC.toISOString(),
+      expirationBrazil: expirationBrazil.toLocaleString('pt-BR'),
+      formattedForMP: formattedDate
     });
     
-    // O MercadoPago espera formato ISO UTC
-    return expirationBrazil.toISOString();
+    return formattedDate;
   }
 }
 
